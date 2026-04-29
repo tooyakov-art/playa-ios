@@ -1,0 +1,73 @@
+name: Playa
+options:
+  bundleIdPrefix: com.playastudio
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: F8LA8PC4U6
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+targets:
+  Playa:
+    type: application
+    platform: iOS
+    sources:
+      - path: Playa
+    resources:
+      - path: Playa/Assets.xcassets
+    info:
+      path: Playa/Info.plist
+      properties:
+        CFBundleDisplayName: Playa
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIUserInterfaceStyle: Dark
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.social-networking
+        NSCameraUsageDescription: Playa uses the camera to scan event ticket QR codes at venues.
+        NSPhotoLibraryUsageDescription: Playa uses your photo library so you can pick an avatar and event cover images.
+        NSPrivacyTracking: false
+        NSPrivacyAccessedAPITypes:
+          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategoryUserDefaults
+            NSPrivacyAccessedAPITypeReasons: ["CA92.1"]
+          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategoryFileTimestamp
+            NSPrivacyAccessedAPITypeReasons: ["C617.1"]
+          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategorySystemBootTime
+            NSPrivacyAccessedAPITypeReasons: ["35F9.1"]
+          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategoryDiskSpace
+            NSPrivacyAccessedAPITypeReasons: ["E174.1"]
+    entitlements:
+      path: Playa/Playa.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playastudio.app
+        PRODUCT_NAME: Playa
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_UILaunchScreen_Generation: NO
+        ENABLE_BITCODE: NO
+        SWIFT_OBJC_BRIDGING_HEADER: ""
