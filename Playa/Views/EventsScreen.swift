@@ -41,8 +41,10 @@ struct EventsScreen: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task { await service.reload() }
             .refreshable { await service.reload() }
-            .navigationDestination(item: $selectedEvent) { event in
-                EventChatView(event: event, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest)
+            .sheet(item: $selectedEvent) { event in
+                NavigationStack {
+                    EventChatView(event: event, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest)
+                }
             }
         }
     }

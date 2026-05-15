@@ -71,8 +71,10 @@ struct MatchesListView: View {
             }
             .navigationTitle("Чаты")
             .task { await reload() }
-            .navigationDestination(item: $selectedChat) { chat in
-                ChatThreadView(chat: chat, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId ?? "", isGuest: auth.isGuest)
+            .sheet(item: $selectedChat) { chat in
+                NavigationStack {
+                    ChatThreadView(chat: chat, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId ?? "", isGuest: auth.isGuest)
+                }
             }
         }
     }
