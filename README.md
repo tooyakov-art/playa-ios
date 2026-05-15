@@ -8,7 +8,7 @@ Built on the **X5 template** (already approved by Apple) — same SupabaseClient
 
 - **Bundle ID:** `app.playahub`
 - **App Store name:** `Playa`
-- **Version:** 1.0.0 (build 1)
+- **Version:** 1.0.0 (build 2)
 - **Apple Team:** F8LA8PC4U6
 - **Stack:** Swift 5.9 + SwiftUI, iOS 16+, no external libraries
 - **Backend:** Supabase project `yteqnagkxbbaqjdgoqeu` (shared with web Playa)
