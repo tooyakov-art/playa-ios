@@ -71,4 +71,21 @@ final class SocialModelsTests: XCTestCase {
         XCTAssertTrue(messages.contains { $0.sender == .user })
         XCTAssertTrue(messages.contains { $0.sender == .other })
     }
+
+    @MainActor
+    func testStarsBuyTicketAndPersistBalance() throws {
+        let suiteName = "playa.tests.stars.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let state = AppState(defaults: defaults)
+        let event = DemoContent.events.first { $0.starPrice > 0 }!
+        XCTAssertThrowsError(try state.buyTicket(event: event))
+
+        state.buyStars(package: StarPackage(stars: 100, priceText: "test"))
+        try state.buyTicket(event: event)
+
+        XCTAssertTrue(state.hasTicket(eventId: event.id))
+        XCTAssertEqual(state.starBalance, 100 - event.starPrice)
+    }
 }

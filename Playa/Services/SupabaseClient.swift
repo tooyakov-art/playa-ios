@@ -50,6 +50,30 @@ final class SupabaseClient {
         return try JSONDecoder().decode(SupabaseSession.self, from: data)
     }
 
+    func oauthURL(provider: String, redirectTo: String) -> URL {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("auth/v1/authorize"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "provider", value: provider),
+            URLQueryItem(name: "redirect_to", value: redirectTo)
+        ]
+        return components.url!
+    }
+
+    func loadUser(accessToken: String) async throws -> SupabaseUser {
+        let url = baseURL.appendingPathComponent("auth/v1/user")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try ensureOK(response: response, data: data)
+        return try JSONDecoder().decode(SupabaseUser.self, from: data)
+    }
+
     func refreshSession() async throws -> SupabaseSession {
         guard let refresh = refreshToken else {
             throw SupabaseError.notAuthenticated

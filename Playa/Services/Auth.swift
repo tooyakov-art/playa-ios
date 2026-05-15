@@ -1,5 +1,6 @@
 import Foundation
 import AuthenticationServices
+import UIKit
 
 @MainActor
 final class Auth: ObservableObject {
@@ -9,6 +10,8 @@ final class Auth: ObservableObject {
     @Published private(set) var isGuest: Bool = false
 
     let supabase = SupabaseClient()
+    private var webAuthSession: ASWebAuthenticationSession?
+    private let presentationProvider = WebAuthPresentationProvider()
 
     private let tokenKey = "playa.session.access_token"
     private let refreshKey = "playa.session.refresh_token"
@@ -35,25 +38,24 @@ final class Auth: ObservableObject {
         store(session: session)
     }
 
-    /// Demo / guest flow — local-only, no Supabase session. Lets users browse
-    /// the app before committing to Apple Sign-In. All write actions are
-    /// blocked behind an `auth.isGuest` check at the call site.
-    func enterGuestMode() {
-        clearStorage()
-        UserDefaults.standard.set(true, forKey: guestKey)
-        isGuest = true
-        isAuthenticated = true
-        userId = "guest"
-        userEmail = nil
-    }
+    func signInWithGoogle() async throws {
+        let callbackScheme = "playa"
+        let redirect = "\(callbackScheme)://auth-callback"
+        let url = supabase.oauthURL(provider: "google", redirectTo: redirect)
+        let callbackURL = try await runWebAuth(url: url, callbackScheme: callbackScheme)
+        let values = callbackURL.playaAuthParameters
 
-    func enterGoogleDemoMode() {
-        clearStorage()
-        UserDefaults.standard.set(true, forKey: guestKey)
-        isGuest = true
-        isAuthenticated = true
-        userId = "google-demo"
-        userEmail = "google.demo@playa.app"
+        guard let accessToken = values["access_token"] else {
+            throw AuthError.invalidCredential
+        }
+
+        let user = try await supabase.loadUser(accessToken: accessToken)
+        let session = SupabaseSession(
+            accessToken: accessToken,
+            refreshToken: values["refresh_token"],
+            user: user
+        )
+        store(session: session)
     }
 
     func signOut() async {
@@ -67,10 +69,6 @@ final class Auth: ObservableObject {
     }
 
     func deleteAccount() async throws {
-        if isGuest {
-            await signOut()
-            return
-        }
         try await supabase.deleteOwnAccount()
         await signOut()
     }
@@ -81,10 +79,7 @@ final class Auth: ObservableObject {
         let defaults = UserDefaults.standard
 
         if defaults.bool(forKey: guestKey) {
-            isGuest = true
-            isAuthenticated = true
-            userId = "guest"
-            return
+            defaults.removeObject(forKey: guestKey)
         }
 
         guard let token = defaults.string(forKey: tokenKey),
@@ -124,6 +119,33 @@ final class Auth: ObservableObject {
         defaults.removeObject(forKey: emailKey)
         defaults.removeObject(forKey: guestKey)
     }
+
+    private func runWebAuth(url: URL, callbackScheme: String) async throws -> URL {
+        try await withCheckedThrowingContinuation { continuation in
+            let session = ASWebAuthenticationSession(url: url, callbackURLScheme: callbackScheme) { callbackURL, error in
+                if let callbackURL {
+                    continuation.resume(returning: callbackURL)
+                } else {
+                    continuation.resume(throwing: error ?? AuthError.invalidCredential)
+                }
+            }
+            session.prefersEphemeralWebBrowserSession = false
+            session.presentationContextProvider = presentationProvider
+            webAuthSession = session
+            if !session.start() {
+                continuation.resume(throwing: AuthError.invalidCredential)
+            }
+        }
+    }
+}
+
+private final class WebAuthPresentationProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow } ?? ASPresentationAnchor()
+    }
 }
 
 enum AuthError: LocalizedError {
@@ -134,5 +156,25 @@ enum AuthError: LocalizedError {
         case .invalidCredential:
             return "Apple did not return a valid identity token."
         }
+    }
+}
+
+private extension URL {
+    var playaAuthParameters: [String: String] {
+        var result: [String: String] = [:]
+        if let queryItems = URLComponents(url: self, resolvingAgainstBaseURL: false)?.queryItems {
+            for item in queryItems {
+                result[item.name] = item.value
+            }
+        }
+        if let fragment {
+            let pairs = fragment.split(separator: "&")
+            for pair in pairs {
+                let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+                guard parts.count == 2 else { continue }
+                result[parts[0]] = parts[1].removingPercentEncoding ?? parts[1]
+            }
+        }
+        return result
     }
 }

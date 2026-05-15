@@ -2,6 +2,13 @@ import SwiftUI
 
 struct ProfileScreen: View {
     @EnvironmentObject private var auth: Auth
+    @EnvironmentObject private var appState: AppState
+    @AppStorage("playa.profile.name") private var profileName = "Адильхан Таргетолог"
+    @AppStorage("playa.profile.username") private var profileUsername = "adilkhan.playa"
+    @AppStorage("playa.profile.city") private var profileCity = "Алматы"
+    @AppStorage("playa.profile.bio") private var profileBio = "Персональный профиль Playa: рекомендации, билеты, QR, чаты событий и посты от компаний. Тут будет нормальная витрина пользователя после регистрации."
+
+    @State private var isEditingProfile = false
     @State private var deleteStage: DeleteStage = .idle
     @State private var errorMessage: String?
 
@@ -33,6 +40,24 @@ struct ProfileScreen: View {
             .navigationTitle("Профиль")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Изм.") { isEditingProfile = true }
+                        .font(.system(size: 15, weight: .bold))
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                }
+            }
+            .sheet(isPresented: $isEditingProfile) {
+                NavigationStack {
+                    EditProfileSheet(
+                        name: $profileName,
+                        username: $profileUsername,
+                        city: $profileCity,
+                        bio: $profileBio
+                    )
+                }
+            }
             .confirmationDialog(
                 "Удалить аккаунт?",
                 isPresented: Binding(get: { deleteStage == .firstConfirm }, set: { if !$0 { deleteStage = .idle } }),
@@ -75,16 +100,16 @@ struct ProfileScreen: View {
                     .frame(width: 74, height: 74)
                     .overlay(Circle().stroke(Color.white.opacity(0.7), lineWidth: 2))
 
-                Text(displayName)
+                Text(profileName)
                     .font(.system(size: 31, weight: .black))
                     .foregroundColor(.white)
 
-                Text("@adilkhan.playa")
+                Text("@\(profileUsername)")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundColor(.white.opacity(0.68))
 
                 HStack(spacing: 10) {
-                    Label("Алматы", systemImage: "mappin.and.ellipse")
+                    Label(profileCity, systemImage: "mappin.and.ellipse")
                     Label("Создатель событий", systemImage: "sparkles")
                 }
                 .font(.system(size: 13, weight: .bold))
@@ -108,7 +133,7 @@ struct ProfileScreen: View {
             Text("О профиле")
                 .font(.system(size: 18, weight: .black))
                 .foregroundColor(.white)
-            Text("Персональный профиль Playa: рекомендации, билеты, QR, чаты событий и посты от компаний. Тут будет нормальная витрина пользователя после регистрации.")
+            Text(profileBio)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white.opacity(0.68))
                 .lineSpacing(3)
@@ -144,6 +169,16 @@ struct ProfileScreen: View {
 
     private var accountControls: some View {
         VStack(spacing: 10) {
+            HStack {
+                Label("\(appState.starBalance.formatted(.number.grouping(.automatic))) звёзд", systemImage: "star.fill")
+                    .foregroundColor(.yellow)
+                Spacer()
+                Button("Купить") { appState.starsStorePresented = true }
+                    .foregroundColor(Color("Hot"))
+            }
+            .font(.system(size: 15, weight: .bold))
+            .padding(.bottom, 2)
+
             if let email = auth.userEmail {
                 row("Email", email)
             } else {
@@ -192,11 +227,6 @@ struct ProfileScreen: View {
         .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    private var displayName: String {
-        if auth.userEmail?.contains("google") == true { return "Адильхан Google" }
-        return "Адильхан Таргетолог"
-    }
-
     private func stat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
@@ -232,5 +262,76 @@ struct ProfileScreen: View {
                 errorMessage = "Ошибка удаления: \(error.localizedDescription)"
             }
         }
+    }
+}
+
+private struct EditProfileSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    @Binding var name: String
+    @Binding var username: String
+    @Binding var city: String
+    @Binding var bio: String
+
+    @State private var draftName: String
+    @State private var draftUsername: String
+    @State private var draftCity: String
+    @State private var draftBio: String
+
+    init(name: Binding<String>, username: Binding<String>, city: Binding<String>, bio: Binding<String>) {
+        _name = name
+        _username = username
+        _city = city
+        _bio = bio
+        _draftName = State(initialValue: name.wrappedValue)
+        _draftUsername = State(initialValue: username.wrappedValue)
+        _draftCity = State(initialValue: city.wrappedValue)
+        _draftBio = State(initialValue: bio.wrappedValue)
+    }
+
+    var body: some View {
+        Form {
+            Section("Профиль") {
+                TextField("Имя", text: $draftName)
+                TextField("Username", text: $draftUsername)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                TextField("Город", text: $draftCity)
+            }
+
+            Section("О себе") {
+                TextEditor(text: $draftBio)
+                    .frame(minHeight: 120)
+            }
+        }
+        .navigationTitle("Редактировать")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Отмена") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Готово") {
+                    name = cleaned(draftName, fallback: name)
+                    username = cleanedUsername(draftUsername, fallback: username)
+                    city = cleaned(draftCity, fallback: city)
+                    bio = cleaned(draftBio, fallback: bio)
+                    dismiss()
+                }
+                .disabled(draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+    }
+
+    private func cleaned(_ value: String, fallback: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? fallback : trimmed
+    }
+
+    private func cleanedUsername(_ value: String, fallback: String) -> String {
+        let trimmed = value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "@", with: "")
+        return trimmed.isEmpty ? fallback : trimmed
     }
 }

@@ -54,9 +54,15 @@ struct EventsScreen: View {
 }
 
 struct EventCard: View {
+    @EnvironmentObject private var appState: AppState
+
     let event: PlayaEvent
     let onOpen: () -> Void
     let onOpenChat: () -> Void
+
+    private var isSaved: Bool {
+        appState.isEventSaved(eventId: event.id)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -124,6 +130,16 @@ struct EventCard: View {
                             .frame(width: 48, height: 42)
                             .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .foregroundColor(.white)
+                    }
+
+                    Button {
+                        appState.toggleSavedEvent(eventId: event.id)
+                    } label: {
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .frame(width: 48, height: 42)
+                            .background(Color.white.opacity(isSaved ? 0.18 : 0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .foregroundColor(isSaved ? Color("Hot") : .white)
                     }
                 }
                 .padding(.top, 6)

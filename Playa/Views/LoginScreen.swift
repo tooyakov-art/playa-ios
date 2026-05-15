@@ -4,6 +4,7 @@ import AuthenticationServices
 struct LoginScreen: View {
     @EnvironmentObject private var auth: Auth
     @State private var errorMessage: String?
+    @State private var isGoogleLoading = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,10 +31,11 @@ struct LoginScreen: View {
                     Text("Playa")
                         .font(.system(size: 40, weight: .black))
                         .foregroundColor(.white)
-                    Text("Кино, события, посты и чаты города.")
+                    Text("Вход нужен, чтобы лайкать, сохранять события и писать в чаты.")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.66))
                         .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
                 }
             }
 
@@ -50,12 +52,16 @@ struct LoginScreen: View {
                 .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
 
                 Button {
-                    auth.enterGoogleDemoMode()
+                    Task { await handleGoogle() }
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "g.circle.fill")
-                            .font(.system(size: 20, weight: .bold))
-                        Text("Продолжить с Google")
+                        if isGoogleLoading {
+                            ProgressView().tint(.white)
+                        } else {
+                            Image(systemName: "g.circle.fill")
+                                .font(.system(size: 20, weight: .bold))
+                        }
+                        Text("Войти через Google")
                             .font(.system(size: 16, weight: .bold))
                     }
                     .foregroundColor(.white)
@@ -67,16 +73,7 @@ struct LoginScreen: View {
                             .stroke(Color.white.opacity(0.16), lineWidth: 1)
                     )
                 }
-
-                Button {
-                    auth.enterGuestMode()
-                } label: {
-                    Text("Посмотреть демо без регистрации")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.82))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                }
+                .disabled(isGoogleLoading)
 
                 if let error = errorMessage {
                     Text(error)
@@ -123,6 +120,17 @@ struct LoginScreen: View {
             if error.code != ASAuthorizationError.canceled.rawValue {
                 errorMessage = "Apple: \(error.localizedDescription)"
             }
+        }
+    }
+
+    private func handleGoogle() async {
+        errorMessage = nil
+        isGoogleLoading = true
+        defer { isGoogleLoading = false }
+        do {
+            try await auth.signInWithGoogle()
+        } catch {
+            errorMessage = "Google: \(error.localizedDescription)"
         }
     }
 }

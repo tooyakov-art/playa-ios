@@ -227,10 +227,25 @@ private struct EventRail: View {
 }
 
 private struct PostCard: View {
+    @EnvironmentObject private var appState: AppState
+
     let post: PlayaPost
     let onComments: () -> Void
     let onReport: () -> Void
     let onOpenEvent: () -> Void
+
+    private var isLiked: Bool {
+        appState.isLiked(postId: post.id)
+    }
+
+    private var visibleLikes: Int {
+        post.likesCount + (isLiked ? 1 : 0)
+    }
+
+    private var isEventSaved: Bool {
+        guard let eventId = post.eventId else { return false }
+        return appState.isEventSaved(eventId: eventId)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
@@ -268,19 +283,37 @@ private struct PostCard: View {
                 .frame(height: 226)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-            if post.eventId != nil {
-                Button(action: onOpenEvent) {
-                    Label("Перейти к мероприятию", systemImage: "ticket.fill")
-                        .font(.system(size: 14, weight: .bold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 11)
-                        .background(Color("Hot"), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                        .foregroundColor(.white)
+            if let eventId = post.eventId {
+                HStack(spacing: 10) {
+                    Button(action: onOpenEvent) {
+                        Label("Перейти к мероприятию", systemImage: "ticket.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
+                            .background(Color("Hot"), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                            .foregroundColor(.white)
+                    }
+
+                    Button {
+                        appState.toggleSavedEvent(eventId: eventId)
+                    } label: {
+                        Image(systemName: isEventSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 17, weight: .bold))
+                            .frame(width: 46, height: 42)
+                            .background(Color.white.opacity(isEventSaved ? 0.18 : 0.1), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                            .foregroundColor(isEventSaved ? Color("Hot") : .white)
+                    }
                 }
             }
 
             HStack(spacing: 18) {
-                Label("\(post.likesCount)", systemImage: "heart")
+                Button {
+                    appState.toggleLike(postId: post.id)
+                } label: {
+                    Label("\(visibleLikes)", systemImage: isLiked ? "heart.fill" : "heart")
+                }
+                .foregroundColor(isLiked ? Color("Hot") : .white.opacity(0.65))
+
                 Button(action: onComments) {
                     Label("\(post.commentsCount)", systemImage: "bubble.right")
                 }
@@ -338,7 +371,19 @@ struct RemoteImage: View {
 }
 
 struct EventDetailSheet: View {
+    @EnvironmentObject private var appState: AppState
+
     let event: PlayaEvent
+    @State private var ticketMessage: String?
+    @State private var starsStorePresented = false
+
+    private var isSaved: Bool {
+        appState.isEventSaved(eventId: event.id)
+    }
+
+    private var hasTicket: Bool {
+        appState.hasTicket(eventId: event.id)
+    }
 
     var body: some View {
         ScrollView {
@@ -360,16 +405,44 @@ struct EventDetailSheet: View {
                     Label("\(event.dateText) \(event.timeText) · \(event.location ?? "Алматы")", systemImage: "mappin.and.ellipse")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.72))
+                    HStack(spacing: 10) {
+                        Label("Баланс \(appState.starBalance.formatted(.number.grouping(.automatic)))", systemImage: "star.fill")
+                            .foregroundColor(.yellow)
+                        Spacer()
+                        Button("Купить звёзды") { starsStorePresented = true }
+                            .foregroundColor(Color("Hot"))
+                    }
+                    .font(.system(size: 14, weight: .bold))
                 }
 
-                Button {
-                } label: {
-                    Label("Забронировать билет · \(event.priceText)", systemImage: "qrcode")
-                        .font(.system(size: 16, weight: .black))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
-                        .background(Color("Hot"), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .foregroundColor(.white)
+                HStack(spacing: 10) {
+                    Button {
+                        buyTicket()
+                    } label: {
+                        Label(ticketButtonTitle, systemImage: hasTicket ? "checkmark.seal.fill" : "star.fill")
+                            .font(.system(size: 16, weight: .black))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 15)
+                            .background(hasTicket ? Color.green.opacity(0.85) : Color("Hot"), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .foregroundColor(.white)
+                    }
+                    .disabled(hasTicket)
+
+                    Button {
+                        appState.toggleSavedEvent(eventId: event.id)
+                    } label: {
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 20, weight: .black))
+                            .frame(width: 58, height: 52)
+                            .background(Color.white.opacity(isSaved ? 0.18 : 0.1), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .foregroundColor(isSaved ? Color("Hot") : .white)
+                    }
+                }
+
+                if let ticketMessage {
+                    Text(ticketMessage)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.68))
                 }
             }
             .padding(16)
@@ -377,6 +450,25 @@ struct EventDetailSheet: View {
         .background(Color("Ink900").ignoresSafeArea())
         .navigationTitle("Мероприятие")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $starsStorePresented) {
+            StarsStoreSheet()
+        }
+    }
+
+    private var ticketButtonTitle: String {
+        if hasTicket { return "Билет куплен" }
+        if event.starPrice == 0 { return "Получить билет бесплатно" }
+        return "Купить билет · \(event.priceText)"
+    }
+
+    private func buyTicket() {
+        do {
+            try appState.buyTicket(event: event)
+            ticketMessage = "Билет добавлен. Оплата прошла звёздами."
+        } catch {
+            ticketMessage = error.localizedDescription
+            starsStorePresented = true
+        }
     }
 }
 

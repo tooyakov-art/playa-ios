@@ -11,7 +11,11 @@ struct PlayaEvent: Identifiable, Hashable, Decodable {
     let priceValue: Int
 
     var priceText: String {
-        priceValue == 0 ? "Бесплатно" : "\(priceValue) ₸"
+        starPrice == 0 ? "Бесплатно" : "\(starPrice) звёзд"
+    }
+
+    var starPrice: Int {
+        priceValue == 0 ? 0 : max(1, Int((Double(priceValue) / 100.0).rounded(.up)))
     }
 
     var dateText: String {
