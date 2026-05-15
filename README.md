@@ -6,7 +6,7 @@ Built on the **X5 template** (already approved by Apple) — same SupabaseClient
 
 ## Status
 
-- **Bundle ID:** `com.playastudio.app`
+- **Bundle ID:** `app.playahub`
 - **App Store name:** `Playa`
 - **Version:** 1.0.0 (build 1)
 - **Apple Team:** F8LA8PC4U6

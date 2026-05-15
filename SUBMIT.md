@@ -29,7 +29,7 @@ Total active time: ~2.5 hours setup + 30 min per submission. Apple review wait: 
 
 1. Apple Developer Portal → Certificates, Identifiers & Profiles → **Identifiers** → **+**
 2. App IDs → App → Continue
-3. Description: `Playa`, Bundle ID: **explicit** `com.playastudio.app`
+3. Description: `Playa`, Bundle ID: **explicit** `app.playahub`
 4. Capabilities — enable **Sign in with Apple**
 5. Continue → Register
 
@@ -38,7 +38,7 @@ Total active time: ~2.5 hours setup + 30 min per submission. Apple review wait: 
 ## 3. Create the App Store Connect entry
 
 1. App Store Connect → **My Apps** → **+** → New App
-2. Platform: iOS, Name: **Playa**, Primary Language: Russian, Bundle ID: `com.playastudio.app`, SKU: `playa-ios-1`
+2. Platform: iOS, Name: **Playa**, Primary Language: Russian, Bundle ID: `app.playahub`, SKU: `playahub-001`
 3. User Access: Full Access
 4. App Information → Category: **Social Networking**
 5. Save
@@ -63,9 +63,9 @@ Total active time: ~2.5 hours setup + 30 min per submission. Apple review wait: 
 
 1. Apple Developer Portal → Profiles → **+**
 2. Distribution → **App Store Connect**
-3. App ID: `com.playastudio.app`
+3. App ID: `app.playahub`
 4. Certificate: the Distribution cert from step 4
-5. Profile Name: **Playa App Store Profile** (must match `ExportOptions.plist`)
+5. Profile Name: **Playa App Store Profile GitHub** (workflow patches `ExportOptions.plist` automatically)
 6. Generate → Download `.mobileprovision`
 7. Encode to base64:
    ```bash

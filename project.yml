@@ -1,6 +1,6 @@
 name: Playa
 options:
-  bundleIdPrefix: com.playastudio
+  bundleIdPrefix: app
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
@@ -63,7 +63,7 @@ targets:
           - Default
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.playastudio.app
+        PRODUCT_BUNDLE_IDENTIFIER: app.playahub
         PRODUCT_NAME: Playa
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -81,7 +81,7 @@ targets:
       - target: Playa
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.playastudio.app.tests
+        PRODUCT_BUNDLE_IDENTIFIER: app.playahub.tests
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:

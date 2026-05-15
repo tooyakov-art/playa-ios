@@ -14,7 +14,7 @@
 	<string>manual</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>com.playastudio.app</key>
+		<key>app.playahub</key>
 		<string>Playa App Store Profile</string>
 	</dict>
 	<key>destination</key>

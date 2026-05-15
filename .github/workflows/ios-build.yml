@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 40
     env:
       SCHEME: Playa
-      BUNDLE_ID: com.playastudio.app
+      BUNDLE_ID: app.playahub
       ARCHIVE_PATH: ${{ github.workspace }}/build/Playa.xcarchive
       EXPORT_PATH: ${{ github.workspace }}/build/export
 
