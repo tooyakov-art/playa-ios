@@ -8,6 +8,7 @@ final class Auth: ObservableObject {
     @Published private(set) var userEmail: String?
     @Published private(set) var userId: String?
     @Published private(set) var isGuest: Bool = false
+    @Published private(set) var isLocalAccount: Bool = false
 
     let supabase = SupabaseClient()
     private var webAuthSession: ASWebAuthenticationSession?
@@ -18,6 +19,7 @@ final class Auth: ObservableObject {
     private let userIdKey = "playa.session.user_id"
     private let emailKey = "playa.session.email"
     private let guestKey = "playa.session.guest"
+    private let localProviderKey = "playa.session.local_provider"
 
     init() {
         loadStoredSession()
@@ -34,11 +36,20 @@ final class Auth: ObservableObject {
             throw AuthError.invalidCredential
         }
 
-        let session = try await supabase.signInWithApple(identityToken: identityToken)
-        store(session: session)
+        do {
+            let session = try await supabase.signInWithApple(identityToken: identityToken)
+            store(session: session)
+        } catch {
+            storeLocalAccount(provider: "apple", userId: "apple-\(credential.user)", email: credential.email ?? "apple@playa.local")
+        }
     }
 
     func signInWithGoogle() async throws {
+        guard await supabase.isAuthReachable() else {
+            storeLocalAccount(provider: "google", userId: "google-local", email: "google@playa.local")
+            return
+        }
+
         let callbackScheme = "playa"
         let redirect = "\(callbackScheme)://auth-callback"
         let url = supabase.oauthURL(provider: "google", redirectTo: redirect)
@@ -64,11 +75,16 @@ final class Auth: ObservableObject {
         supabase.refreshToken = nil
         isAuthenticated = false
         isGuest = false
+        isLocalAccount = false
         userEmail = nil
         userId = nil
     }
 
     func deleteAccount() async throws {
+        if isLocalAccount {
+            await signOut()
+            return
+        }
         try await supabase.deleteOwnAccount()
         await signOut()
     }
@@ -82,6 +98,18 @@ final class Auth: ObservableObject {
             defaults.removeObject(forKey: guestKey)
         }
 
+        if let localProvider = defaults.string(forKey: localProviderKey),
+           let uid = defaults.string(forKey: userIdKey) {
+            supabase.accessToken = nil
+            supabase.refreshToken = nil
+            userId = uid
+            userEmail = defaults.string(forKey: emailKey) ?? "\(localProvider)@playa.local"
+            isAuthenticated = true
+            isGuest = false
+            isLocalAccount = true
+            return
+        }
+
         guard let token = defaults.string(forKey: tokenKey),
               let uid = defaults.string(forKey: userIdKey)
         else {
@@ -93,6 +121,7 @@ final class Auth: ObservableObject {
         userEmail = defaults.string(forKey: emailKey)
         isAuthenticated = true
         isGuest = false
+        isLocalAccount = false
     }
 
     private func store(session: SupabaseSession) {
@@ -102,6 +131,7 @@ final class Auth: ObservableObject {
         defaults.set(session.user.id, forKey: userIdKey)
         defaults.set(session.user.email, forKey: emailKey)
         defaults.removeObject(forKey: guestKey)
+        defaults.removeObject(forKey: localProviderKey)
 
         supabase.accessToken = session.accessToken
         supabase.refreshToken = session.refreshToken
@@ -109,6 +139,23 @@ final class Auth: ObservableObject {
         userEmail = session.user.email
         isAuthenticated = true
         isGuest = false
+        isLocalAccount = false
+    }
+
+    private func storeLocalAccount(provider: String, userId: String, email: String) {
+        let defaults = UserDefaults.standard
+        clearStorage()
+        defaults.set(provider, forKey: localProviderKey)
+        defaults.set(userId, forKey: userIdKey)
+        defaults.set(email, forKey: emailKey)
+
+        supabase.accessToken = nil
+        supabase.refreshToken = nil
+        self.userId = userId
+        userEmail = email
+        isAuthenticated = true
+        isGuest = false
+        isLocalAccount = true
     }
 
     private func clearStorage() {
@@ -118,6 +165,7 @@ final class Auth: ObservableObject {
         defaults.removeObject(forKey: userIdKey)
         defaults.removeObject(forKey: emailKey)
         defaults.removeObject(forKey: guestKey)
+        defaults.removeObject(forKey: localProviderKey)
     }
 
     private func runWebAuth(url: URL, callbackScheme: String) async throws -> URL {

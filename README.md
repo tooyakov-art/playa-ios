@@ -6,14 +6,14 @@ Native SwiftUI app for Playa: events, tickets, posts, chats, and city recommenda
 
 - **Bundle ID:** `app.playahub`
 - **App Store name:** `Playa`
-- **Version:** 1.0.0 (build 4)
+- **Version:** 1.0.0 (build 5)
 - **Apple Team:** F8LA8PC4U6
 - **Stack:** Swift 5.9 + SwiftUI, iOS 16+, no external libraries
 - **Build:** GitHub Actions macOS runner -> TestFlight
 
 ## Current TestFlight Demo
 
-- `LoginScreen` - Apple Sign-In and Google OAuth only, no guest preview.
+- `LoginScreen` - Apple Sign-In and Google entry with local account fallback while Supabase is unavailable, no guest preview.
 - `MainTabView` - Telegram-style bottom controls: 4 tabs plus a solo create button.
 - `FeedScreen` - recommendation feed with movies, banners, event cards, 100+ generated demo posts, working likes and event saves.
 - `EventsScreen` - demo events from Kazakhstani company-style accounts with ticket, chat, save actions, and star-only ticket payment.

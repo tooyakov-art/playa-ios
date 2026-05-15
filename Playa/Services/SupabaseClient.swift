@@ -74,6 +74,23 @@ final class SupabaseClient {
         return try JSONDecoder().decode(SupabaseUser.self, from: data)
     }
 
+    func isAuthReachable() async -> Bool {
+        let url = baseURL.appendingPathComponent("auth/v1/settings")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 4
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return false }
+            return (200..<500).contains(http.statusCode)
+        } catch {
+            return false
+        }
+    }
+
     func refreshSession() async throws -> SupabaseSession {
         guard let refresh = refreshToken else {
             throw SupabaseError.notAuthenticated

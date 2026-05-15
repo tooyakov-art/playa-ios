@@ -181,6 +181,7 @@ struct ProfileScreen: View {
 
             if let email = auth.userEmail {
                 row("Email", email)
+                row("Вход", auth.isLocalAccount ? "Локальный аккаунт" : "Аккаунт")
             } else {
                 row("Режим", auth.isGuest ? "Демо" : "Аккаунт")
             }
