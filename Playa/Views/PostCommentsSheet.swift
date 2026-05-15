@@ -12,6 +12,10 @@ struct PostCommentsSheet: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
+    private var isDemoPost: Bool {
+        post.id.hasPrefix("demo-post-")
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -19,18 +23,15 @@ struct PostCommentsSheet: View {
                     ProgressView().tint(Color("Hot"))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if comments.isEmpty {
-                    EmptyStateView(
-                        title: "Комментариев нет",
-                        message: "Будьте первым, кто ответит на пост."
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    EmptyStateView(title: "Комментариев нет", message: "Будьте первым, кто ответит на пост.")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List(comments) { comment in
                         HStack(alignment: .top, spacing: 10) {
                             AvatarView(url: comment.author.avatarURL, fallback: String(comment.author.name.prefix(1)))
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(comment.author.name)
-                                    .font(.system(size: 14, weight: .semibold))
+                                    .font(.system(size: 14, weight: .bold))
                                 Text(comment.text)
                                     .font(.system(size: 15))
                             }
@@ -49,9 +50,8 @@ struct PostCommentsSheet: View {
                 }
 
                 HStack(spacing: 10) {
-                    TextField(isGuest ? "Войдите, чтобы писать" : "Комментарий", text: $text, axis: .vertical)
+                    TextField("Комментарий", text: $text, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
-                        .disabled(isGuest)
 
                     Button {
                         Task { await send() }
@@ -60,7 +60,7 @@ struct PostCommentsSheet: View {
                             .font(.system(size: 30))
                             .foregroundColor(Color("Hot"))
                     }
-                    .disabled(isGuest || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .padding(12)
                 .background(.bar)
@@ -76,6 +76,10 @@ struct PostCommentsSheet: View {
     }
 
     private func reload() async {
+        if isDemoPost {
+            comments = DemoContent.comments(for: post)
+            return
+        }
         isLoading = true
         do {
             comments = try await service.loadPostComments(postId: post.id)
@@ -87,9 +91,24 @@ struct PostCommentsSheet: View {
     }
 
     private func send() async {
-        guard let currentUserId, !isGuest else { return }
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return }
+        if isDemoPost || isGuest {
+            comments.append(
+                PostComment(
+                    id: "\(post.id)-local-\(Date().timeIntervalSince1970)",
+                    postId: post.id,
+                    authorId: currentUserId ?? "guest",
+                    text: value,
+                    createdAt: Date(),
+                    author: PlayaProfile(id: "me", name: "Вы", username: "me", avatarURL: nil)
+                )
+            )
+            text = ""
+            return
+        }
+
+        guard let currentUserId else { return }
         do {
             _ = try await service.createPostComment(authorId: currentUserId, postId: post.id, text: value)
             text = ""

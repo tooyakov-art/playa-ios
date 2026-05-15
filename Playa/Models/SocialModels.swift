@@ -152,7 +152,7 @@ struct ChatPreview: Identifiable, Hashable {
     let lastMessageAt: Date?
 
     var subtitle: String {
-        lastMessage ?? "No messages yet"
+        lastMessage ?? "Сообщений пока нет"
     }
 }
 

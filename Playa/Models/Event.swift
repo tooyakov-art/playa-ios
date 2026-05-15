@@ -26,7 +26,6 @@ struct PlayaEvent: Identifiable, Hashable, Decodable {
 }
 
 extension PlayaEvent {
-    /// Decodes the row shape returned by Supabase REST.
     init(row: Row) {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ProfileScreen: View {
     @EnvironmentObject private var auth: Auth
-
     @State private var deleteStage: DeleteStage = .idle
     @State private var errorMessage: String?
 
@@ -15,85 +14,28 @@ struct ProfileScreen: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("Аккаунт") {
-                    if auth.isGuest {
-                        HStack {
-                            Text("Режим")
-                            Spacer()
-                            Text("Гость").foregroundColor(.secondary)
-                        }
-                    } else if let email = auth.userEmail {
-                        LabeledContent("Email", value: email)
-                    }
-                    if let uid = auth.userId, !auth.isGuest {
-                        LabeledContent("ID") {
-                            Text(uid.prefix(8) + "…")
-                                .font(.system(.footnote, design: .monospaced))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
+            ZStack {
+                Color("Ink900").ignoresSafeArea()
 
-                Section {
-                    Button("Выйти") {
-                        Task { await auth.signOut() }
+                ScrollView {
+                    VStack(spacing: 18) {
+                        hero
+                        stats
+                        bio
+                        gallery
+                        accountControls
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 16)
+                    .padding(.bottom, 96)
                 }
-
-                if !auth.isGuest {
-                    Section {
-                        Button(role: .destructive) {
-                            deleteStage = .firstConfirm
-                        } label: {
-                            if deleteStage == .deleting {
-                                HStack {
-                                    ProgressView()
-                                    Text("Удаление…")
-                                }
-                            } else {
-                                Text("Удалить аккаунт")
-                            }
-                        }
-                        .disabled(deleteStage == .deleting)
-                    } header: {
-                        Text("Опасная зона")
-                    } footer: {
-                        Text("Аккаунт и все связанные данные будут удалены без возможности восстановления.")
-                    }
-                }
-
-                if let error = errorMessage {
-                    Section {
-                        Text(error).foregroundColor(.red)
-                    }
-                }
-
-                Section {
-                    Link("Политика конфиденциальности", destination: PlayaConfig.privacyURL)
-                    Link("Условия использования", destination: PlayaConfig.termsURL)
-                    Link("Поддержка", destination: URL(string: "mailto:\(PlayaConfig.supportEmail)")!)
-                }
-
-                Section {
-                    HStack {
-                        Spacer()
-                        Text("Playa · v\(PlayaConfig.appVersion)")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-                }
-                .listRowBackground(Color.clear)
             }
             .navigationTitle("Профиль")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .confirmationDialog(
                 "Удалить аккаунт?",
-                isPresented: Binding(
-                    get: { deleteStage == .firstConfirm },
-                    set: { if !$0 { deleteStage = .idle } }
-                ),
+                isPresented: Binding(get: { deleteStage == .firstConfirm }, set: { if !$0 { deleteStage = .idle } }),
                 titleVisibility: .visible
             ) {
                 Button("Продолжить", role: .destructive) {
@@ -103,14 +45,11 @@ struct ProfileScreen: View {
                 }
                 Button("Отмена", role: .cancel) { deleteStage = .idle }
             } message: {
-                Text("Аккаунт и все данные будут удалены навсегда. Восстановить будет невозможно.")
+                Text("Аккаунт и связанные данные будут удалены.")
             }
             .confirmationDialog(
                 "Точно удалить?",
-                isPresented: Binding(
-                    get: { deleteStage == .finalConfirm },
-                    set: { if !$0 { deleteStage = .idle } }
-                ),
+                isPresented: Binding(get: { deleteStage == .finalConfirm }, set: { if !$0 { deleteStage = .idle } }),
                 titleVisibility: .visible
             ) {
                 Button("Удалить навсегда", role: .destructive) {
@@ -118,9 +57,167 @@ struct ProfileScreen: View {
                 }
                 Button("Отмена", role: .cancel) { deleteStage = .idle }
             } message: {
-                Text("После удаления аккаунт восстановить нельзя.")
+                Text("После удаления восстановить профиль нельзя.")
             }
         }
+    }
+
+    private var hero: some View {
+        ZStack(alignment: .bottomLeading) {
+            RemoteImage(url: URL(string: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80"))
+                .frame(height: 360)
+                .clipped()
+
+            LinearGradient(colors: [.clear, .black.opacity(0.86)], startPoint: .top, endPoint: .bottom)
+
+            VStack(alignment: .leading, spacing: 10) {
+                AvatarView(url: nil, fallback: "А")
+                    .frame(width: 74, height: 74)
+                    .overlay(Circle().stroke(Color.white.opacity(0.7), lineWidth: 2))
+
+                Text(displayName)
+                    .font(.system(size: 31, weight: .black))
+                    .foregroundColor(.white)
+
+                Text("@adilkhan.playa")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white.opacity(0.68))
+
+                HStack(spacing: 10) {
+                    Label("Алматы", systemImage: "mappin.and.ellipse")
+                    Label("Создатель событий", systemImage: "sparkles")
+                }
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white.opacity(0.76))
+            }
+            .padding(18)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private var stats: some View {
+        HStack(spacing: 10) {
+            stat("24K", "подписчиков")
+            stat("252", "подписок")
+            stat("732", "активности")
+        }
+    }
+
+    private var bio: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("О профиле")
+                .font(.system(size: 18, weight: .black))
+                .foregroundColor(.white)
+            Text("Персональный профиль Playa: рекомендации, билеты, QR, чаты событий и посты от компаний. Тут будет нормальная витрина пользователя после регистрации.")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white.opacity(0.68))
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var gallery: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Последние события")
+                .font(.system(size: 18, weight: .black))
+                .foregroundColor(.white)
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                ForEach(DemoContent.events.prefix(4)) { event in
+                    ZStack(alignment: .bottomLeading) {
+                        RemoteImage(url: event.imageURL)
+                            .frame(height: 136)
+                            .clipped()
+                        LinearGradient(colors: [.clear, .black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
+                        Text(event.title)
+                            .font(.system(size: 13, weight: .black))
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                            .padding(10)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+            }
+        }
+    }
+
+    private var accountControls: some View {
+        VStack(spacing: 10) {
+            if let email = auth.userEmail {
+                row("Email", email)
+            } else {
+                row("Режим", auth.isGuest ? "Демо" : "Аккаунт")
+            }
+
+            Button {
+                Task { await auth.signOut() }
+            } label: {
+                Text("Выйти")
+                    .font(.system(size: 15, weight: .bold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .foregroundColor(.white)
+            }
+
+            if !auth.isGuest {
+                Button(role: .destructive) {
+                    deleteStage = .firstConfirm
+                } label: {
+                    Text(deleteStage == .deleting ? "Удаление..." : "Удалить аккаунт")
+                        .font(.system(size: 15, weight: .bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                }
+                .disabled(deleteStage == .deleting)
+            }
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundColor(.red)
+            }
+
+            HStack(spacing: 14) {
+                Link("Privacy", destination: PlayaConfig.privacyURL)
+                Link("Terms", destination: PlayaConfig.termsURL)
+                Link("Support", destination: URL(string: "mailto:\(PlayaConfig.supportEmail)")!)
+            }
+            .font(.footnote)
+            .foregroundColor(.white.opacity(0.52))
+            .padding(.top, 4)
+        }
+        .padding(16)
+        .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var displayName: String {
+        if auth.userEmail?.contains("google") == true { return "Адильхан Google" }
+        return "Адильхан Таргетолог"
+    }
+
+    private func stat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 22, weight: .black))
+                .foregroundColor(.white)
+            Text(label)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func row(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title).foregroundColor(.white.opacity(0.58))
+            Spacer()
+            Text(value).foregroundColor(.white)
+        }
+        .font(.system(size: 14, weight: .semibold))
     }
 
     private func runDelete() async {

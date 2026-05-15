@@ -55,4 +55,20 @@ final class SocialModelsTests: XCTestCase {
         XCTAssertEqual(message.sender, .user)
         XCTAssertEqual(message.text, "Yo")
     }
+
+    func testDemoFeedContainsOneHundredDifferentPosts() {
+        let posts = DemoContent.recommendedPosts(count: 100)
+        XCTAssertEqual(posts.count, 100)
+        XCTAssertEqual(Set(posts.map(\.id)).count, 100)
+        XCTAssertGreaterThan(Set(posts.map(\.author.name)).count, 10)
+        XCTAssertTrue(posts.contains { $0.eventId != nil })
+    }
+
+    func testDemoChatsHaveMessages() {
+        let chat = DemoContent.demoChats[0]
+        let messages = DemoContent.messages(for: chat.id)
+        XCTAssertGreaterThanOrEqual(messages.count, 4)
+        XCTAssertTrue(messages.contains { $0.sender == .user })
+        XCTAssertTrue(messages.contains { $0.sender == .other })
+    }
 }

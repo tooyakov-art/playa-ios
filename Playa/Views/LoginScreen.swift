@@ -7,61 +7,75 @@ struct LoginScreen: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 0)
+            Spacer(minLength: 24)
 
             VStack(spacing: 18) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(
                             LinearGradient(
-                                colors: [Color("Hot"), Color("HotDeep")],
+                                colors: [Color("Hot"), Color("HotDeep"), Color("Cyan").opacity(0.65)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 96, height: 96)
-                        .shadow(color: Color("Hot").opacity(0.45), radius: 18, y: 8)
+                        .frame(width: 104, height: 104)
+                        .shadow(color: Color("Hot").opacity(0.45), radius: 22, y: 10)
                     Text("P")
-                        .font(.system(size: 44, weight: .heavy, design: .rounded))
+                        .font(.system(size: 48, weight: .black, design: .rounded))
                         .foregroundColor(.white)
                 }
 
-                Text("Playa")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(.white)
-
-                Text("События, билеты и сообщества\nв одном месте.")
-                    .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.6))
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-                    .padding(.horizontal, 32)
+                VStack(spacing: 8) {
+                    Text("Playa")
+                        .font(.system(size: 40, weight: .black))
+                        .foregroundColor(.white)
+                    Text("Кино, события, посты и чаты города.")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.66))
+                        .multilineTextAlignment(.center)
+                }
             }
 
             Spacer()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
                 SignInWithAppleButton(.signIn) { request in
                     request.requestedScopes = [.fullName, .email]
                 } onCompletion: { result in
                     Task { await handleApple(result) }
                 }
                 .signInWithAppleButtonStyle(.white)
-                .frame(height: 52)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .frame(height: 54)
+                .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+
+                Button {
+                    auth.enterGoogleDemoMode()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "g.circle.fill")
+                            .font(.system(size: 20, weight: .bold))
+                        Text("Продолжить с Google")
+                            .font(.system(size: 16, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                    )
+                }
 
                 Button {
                     auth.enterGuestMode()
                 } label: {
-                    Text("Зайти как гость")
+                    Text("Посмотреть демо без регистрации")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundColor(.white.opacity(0.82))
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Color.white.opacity(0.18), lineWidth: 1)
-                        )
+                        .frame(height: 50)
                 }
 
                 if let error = errorMessage {
@@ -85,7 +99,15 @@ struct LoginScreen: View {
         }
         .frame(maxWidth: 480)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color("Ink900").ignoresSafeArea())
+        .background(
+            ZStack {
+                Color("Ink900")
+                RemoteImage(url: URL(string: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80"))
+                    .opacity(0.16)
+                    .blur(radius: 1)
+            }
+            .ignoresSafeArea()
+        )
     }
 
     private func handleApple(_ result: Result<ASAuthorization, Error>) async {

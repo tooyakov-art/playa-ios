@@ -11,31 +11,26 @@ struct EventChatView: View {
     @State private var errorMessage: String?
     @State private var hasJoined = false
 
+    private var isDemoEvent: Bool {
+        event.id.hasPrefix("event-")
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            if messages.isEmpty {
-                EmptyStateView(
-                    title: "Чат события",
-                    message: "Здесь будет разговор участников \(event.title)."
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color("Ink900"))
-            } else {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 10) {
-                            ForEach(messages) { message in
-                                MessageBubble(message: message)
-                                    .id(message.id)
-                            }
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 10) {
+                        ForEach(messages) { message in
+                            MessageBubble(message: message)
+                                .id(message.id)
                         }
-                        .padding(14)
                     }
-                    .background(Color("Ink900"))
-                    .onChange(of: messages.count) { _ in
-                        if let last = messages.last {
-                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
-                        }
+                    .padding(14)
+                }
+                .background(Color("Ink900"))
+                .onChange(of: messages.count) { _ in
+                    if let last = messages.last {
+                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
                 }
             }
@@ -49,9 +44,8 @@ struct EventChatView: View {
             }
 
             HStack(spacing: 10) {
-                TextField(isGuest ? "Войдите, чтобы писать" : "Сообщение в событие", text: $text, axis: .vertical)
+                TextField("Сообщение в событие", text: $text, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
-                    .disabled(isGuest)
 
                 Button {
                     Task { await send() }
@@ -60,7 +54,7 @@ struct EventChatView: View {
                         .font(.system(size: 30))
                         .foregroundColor(Color("Hot"))
                 }
-                .disabled(isGuest || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding(12)
             .background(.bar)
@@ -71,6 +65,10 @@ struct EventChatView: View {
     }
 
     private func refreshLoop() async {
+        if isDemoEvent {
+            messages = DemoContent.eventMessages(for: event)
+            return
+        }
         await joinIfNeeded()
         await reload()
         while !Task.isCancelled {
@@ -96,9 +94,24 @@ struct EventChatView: View {
     }
 
     private func send() async {
-        guard let currentUserId, !isGuest else { return }
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return }
+        if isDemoEvent || isGuest {
+            messages.append(
+                ChatMessage(
+                    id: "\(event.id)-local-\(Date().timeIntervalSince1970)",
+                    sender: .user,
+                    text: value,
+                    createdAt: Date(),
+                    senderName: "Вы",
+                    senderAvatarURL: nil
+                )
+            )
+            text = ""
+            return
+        }
+
+        guard let currentUserId else { return }
         do {
             await joinIfNeeded()
             try await service.sendEventMessage(eventId: event.id, senderId: currentUserId, text: value)

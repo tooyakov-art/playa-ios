@@ -8,8 +8,11 @@ struct ChatThreadView: View {
 
     @State private var messages: [ChatMessage] = []
     @State private var text = ""
-    @State private var isLoading = false
     @State private var errorMessage: String?
+
+    private var isDemoChat: Bool {
+        chat.id.hasPrefix("chat-")
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -40,9 +43,8 @@ struct ChatThreadView: View {
             }
 
             HStack(spacing: 10) {
-                TextField(isGuest ? "Войдите, чтобы писать" : "Сообщение", text: $text, axis: .vertical)
+                TextField("Сообщение", text: $text, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
-                    .disabled(isGuest)
 
                 Button {
                     Task { await send() }
@@ -51,7 +53,7 @@ struct ChatThreadView: View {
                         .font(.system(size: 30))
                         .foregroundColor(Color("Hot"))
                 }
-                .disabled(isGuest || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding(12)
             .background(.bar)
@@ -62,6 +64,10 @@ struct ChatThreadView: View {
     }
 
     private func refreshLoop() async {
+        if isDemoChat {
+            messages = DemoContent.messages(for: chat.id)
+            return
+        }
         await reload()
         while !Task.isCancelled {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
@@ -70,19 +76,36 @@ struct ChatThreadView: View {
     }
 
     private func reload(silent: Bool = false) async {
-        if !silent { isLoading = true }
+        if isDemoChat {
+            messages = DemoContent.messages(for: chat.id)
+            return
+        }
         do {
             messages = try await service.loadChatMessages(chatId: chat.id, currentUserId: currentUserId)
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
     private func send() async {
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty, !isGuest else { return }
+        guard !value.isEmpty else { return }
+        if isDemoChat || isGuest {
+            messages.append(
+                ChatMessage(
+                    id: "\(chat.id)-local-\(Date().timeIntervalSince1970)",
+                    sender: .user,
+                    text: value,
+                    createdAt: Date(),
+                    senderName: "Вы",
+                    senderAvatarURL: nil
+                )
+            )
+            text = ""
+            return
+        }
+
         do {
             try await service.sendDirectMessage(chatId: chat.id, senderId: currentUserId, text: value)
             text = ""

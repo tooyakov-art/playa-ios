@@ -2,46 +2,49 @@ import SwiftUI
 
 struct EventsScreen: View {
     @EnvironmentObject private var auth: Auth
-    @StateObject private var service: EventsService
     @State private var selectedEvent: PlayaEvent?
+    @State private var chatEvent: PlayaEvent?
 
-    init() {
-        // EventsService is created here so that it owns its own lifecycle per
-        // tab; access token comes from the shared Auth.supabase client.
-        _service = StateObject(wrappedValue: EventsService(supabase: SupabaseClient()))
-    }
+    private let events = DemoContent.events
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color("Ink900").ignoresSafeArea()
 
-                if service.isLoading && service.events.isEmpty {
-                    ProgressView().tint(Color("Hot"))
-                } else if service.events.isEmpty {
-                    EmptyStateView(
-                        title: "Скоро появятся события",
-                        message: service.lastError ?? "Загляните позже — афиша обновляется каждый день."
-                    )
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 14) {
-                            ForEach(service.events) { event in
-                                EventCard(event: event) {
-                                    selectedEvent = event
-                                }
-                            }
+                ScrollView {
+                    LazyVStack(spacing: 14) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Афиша")
+                                .font(.system(size: 30, weight: .black))
+                                .foregroundColor(.white)
+                            Text("Кино, концерты, бренды и городские встречи.")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white.opacity(0.58))
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 16)
+                        .padding(.top, 16)
+
+                        ForEach(events) { event in
+                            EventCard(
+                                event: event,
+                                onOpen: { selectedEvent = event },
+                                onOpenChat: { chatEvent = event }
+                            )
+                            .padding(.horizontal, 16)
+                        }
                     }
+                    .padding(.bottom, 96)
                 }
             }
             .navigationTitle("События")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .task { await service.reload() }
-            .refreshable { await service.reload() }
             .sheet(item: $selectedEvent) { event in
+                NavigationStack { EventDetailSheet(event: event) }
+            }
+            .sheet(item: $chatEvent) { event in
                 NavigationStack {
                     EventChatView(event: event, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest)
                 }
@@ -52,37 +55,29 @@ struct EventsScreen: View {
 
 struct EventCard: View {
     let event: PlayaEvent
+    let onOpen: () -> Void
     let onOpenChat: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topTrailing) {
-                AsyncImage(url: event.imageURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    default:
-                        LinearGradient(
-                            colors: [Color("Ink800"), Color("Ink700")],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    }
+            Button(action: onOpen) {
+                ZStack(alignment: .topTrailing) {
+                    RemoteImage(url: event.imageURL)
+                        .frame(height: 188)
+                        .clipped()
+
+                    Text(event.priceText)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.black.opacity(0.58), in: Capsule())
+                        .padding(12)
                 }
-                .frame(height: 180)
-                .frame(maxWidth: .infinity)
-                .clipped()
-
-                Text(event.priceText)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.black.opacity(0.55), in: Capsule())
-                    .padding(12)
             }
+            .buttonStyle(.plain)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     Text(event.dateText)
                     if !event.timeText.isEmpty {
@@ -90,40 +85,48 @@ struct EventCard: View {
                         Text(event.timeText)
                     }
                     Spacer()
-                    if let category = event.category {
-                        Text(category.uppercased())
-                            .font(.system(size: 11, weight: .semibold))
-                            .tracking(0.6)
-                            .foregroundColor(Color("Hot"))
-                    }
+                    Text((event.category ?? "EVENT").uppercased())
+                        .font(.system(size: 11, weight: .black))
+                        .foregroundColor(Color("Hot"))
                 }
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(.white.opacity(0.7))
 
                 Text(event.title)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 20, weight: .black))
                     .foregroundColor(.white)
                     .lineLimit(2)
 
+                Text(event.description ?? "")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.62))
+                    .lineLimit(2)
+
                 if let location = event.location, !location.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "mappin.and.ellipse")
-                        Text(location).lineLimit(1)
-                    }
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.6))
+                    Label(location, systemImage: "mappin.and.ellipse")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.62))
                 }
 
-                Button(action: onOpenChat) {
-                    Label("Чат события", systemImage: "bubble.left.and.bubble.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color("Hot"))
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                HStack(spacing: 10) {
+                    Button(action: onOpen) {
+                        Label("Билет", systemImage: "qrcode")
+                            .font(.system(size: 14, weight: .bold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
+                            .background(Color("Hot"), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .foregroundColor(.white)
+                    }
+
+                    Button(action: onOpenChat) {
+                        Image(systemName: "bubble.left.and.bubble.right.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .frame(width: 48, height: 42)
+                            .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .foregroundColor(.white)
+                    }
                 }
-                .padding(.top, 8)
+                .padding(.top, 6)
             }
             .padding(14)
         }

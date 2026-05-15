@@ -47,6 +47,15 @@ final class Auth: ObservableObject {
         userEmail = nil
     }
 
+    func enterGoogleDemoMode() {
+        clearStorage()
+        UserDefaults.standard.set(true, forKey: guestKey)
+        isGuest = true
+        isAuthenticated = true
+        userId = "google-demo"
+        userEmail = "google.demo@playa.app"
+    }
+
     func signOut() async {
         clearStorage()
         supabase.accessToken = nil

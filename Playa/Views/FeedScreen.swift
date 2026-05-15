@@ -4,99 +4,225 @@ struct FeedScreen: View {
     @EnvironmentObject private var auth: Auth
 
     @State private var posts: [PlayaPost] = []
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    @State private var isComposing = false
-    @State private var composeText = ""
+    @State private var nextPostIndex = 0
     @State private var selectedPost: PlayaPost?
+    @State private var selectedEvent: PlayaEvent?
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color("Ink900").ignoresSafeArea()
 
-                if isLoading && posts.isEmpty {
-                    ProgressView().tint(Color("Hot"))
-                } else if posts.isEmpty {
-                    EmptyStateView(
-                        title: "Лента скоро оживет",
-                        message: errorMessage ?? "Первые посты появятся здесь. Авторизуйтесь, чтобы написать первым."
-                    )
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 14) {
-                            ForEach(posts) { post in
-                                PostCard(
-                                    post: post,
-                                    onComments: { selectedPost = post },
-                                    onReport: { Task { await report(post: post) } }
-                                )
+                ScrollView {
+                    LazyVStack(spacing: 18) {
+                        header
+                            .padding(.horizontal, 16)
+                            .padding(.top, 14)
+
+                        MovieRail(movies: DemoContent.movies)
+
+                        BannerRail(banners: DemoContent.banners) { banner in
+                            if let event = DemoContent.events.first(where: { $0.id == banner.eventId }) {
+                                selectedEvent = event
                             }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 16)
+
+                        EventRail(events: Array(DemoContent.events.prefix(6))) { event in
+                            selectedEvent = event
+                        }
+
+                        ForEach(posts) { post in
+                            PostCard(
+                                post: post,
+                                onComments: { selectedPost = post },
+                                onReport: {},
+                                onOpenEvent: {
+                                    if let eventId = post.eventId,
+                                       let event = DemoContent.events.first(where: { $0.id == eventId }) {
+                                        selectedEvent = event
+                                    }
+                                }
+                            )
+                            .padding(.horizontal, 16)
+                            .onAppear {
+                                if post.id == posts.last?.id {
+                                    appendMorePosts()
+                                }
+                            }
+                        }
                     }
-                    .refreshable { await reload() }
+                    .padding(.bottom, 96)
                 }
+                .refreshable { reloadDemoFeed() }
             }
-            .navigationTitle("Лента")
-            .toolbar {
-                Button {
-                    isComposing = true
-                } label: {
-                    Image(systemName: "square.and.pencil")
+            .navigationTitle("Playa")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .task {
+                if posts.isEmpty {
+                    reloadDemoFeed()
                 }
-                .disabled(auth.isGuest)
-            }
-            .task { await reload() }
-            .sheet(isPresented: $isComposing) {
-                ComposePostSheet(
-                    text: $composeText,
-                    isGuest: auth.isGuest,
-                    onCancel: {
-                        composeText = ""
-                        isComposing = false
-                    },
-                    onSubmit: {
-                        Task { await createPost() }
-                    }
-                )
             }
             .sheet(item: $selectedPost) { post in
                 PostCommentsSheet(post: post, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest)
             }
+            .sheet(item: $selectedEvent) { event in
+                NavigationStack {
+                    EventDetailSheet(event: event)
+                }
+            }
         }
     }
 
-    private func reload() async {
-        isLoading = true
-        errorMessage = nil
-        do {
-            posts = try await SocialService(supabase: auth.supabase).loadPosts()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        isLoading = false
-    }
-
-    private func createPost() async {
-        guard let userId = auth.userId, !auth.isGuest else { return }
-        let text = composeText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-
-        do {
-            _ = try await SocialService(supabase: auth.supabase).createPost(authorId: userId, text: text)
-            composeText = ""
-            isComposing = false
-            await reload()
-        } catch {
-            errorMessage = error.localizedDescription
+    private var header: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Сегодня в Алматы")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Color("Hot"))
+                Text("Фильмы, события и посты")
+                    .font(.system(size: 26, weight: .black))
+                    .foregroundColor(.white)
+                Text("Лента рекомендаций от казахстанских компаний и площадок.")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.58))
+            }
+            Spacer()
+            Image(systemName: "sparkles")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 46, height: 46)
+                .background(Color("Hot"), in: Circle())
         }
     }
 
-    private func report(post: PlayaPost) async {
-        guard let userId = auth.userId, !auth.isGuest else { return }
-        await SocialService(supabase: auth.supabase).reportContent(reporterId: userId, kind: "post", targetId: post.id)
+    private func reloadDemoFeed() {
+        posts = DemoContent.recommendedPosts(count: 30)
+        nextPostIndex = posts.count
+    }
+
+    private func appendMorePosts() {
+        guard posts.count < 180 else { return }
+        let newPosts = (nextPostIndex..<(nextPostIndex + 12)).map(DemoContent.recommendedPost(index:))
+        posts.append(contentsOf: newPosts)
+        nextPostIndex += newPosts.count
+    }
+}
+
+private struct MovieRail: View {
+    let movies: [DemoMovie]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionTitle(title: "Фильмы сверху", subtitle: "Быстрый выбор на вечер")
+                .padding(.horizontal, 16)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(movies) { movie in
+                        ZStack(alignment: .bottomLeading) {
+                            RemoteImage(url: movie.imageURL)
+                                .frame(width: 250, height: 146)
+                                .clipped()
+
+                            LinearGradient(colors: [.clear, .black.opacity(0.78)], startPoint: .top, endPoint: .bottom)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(movie.title)
+                                    .font(.system(size: 19, weight: .black))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                Text(movie.subtitle)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.78))
+                            }
+                            .padding(14)
+                        }
+                        .frame(width: 250, height: 146)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+    }
+}
+
+private struct BannerRail: View {
+    let banners: [DemoBanner]
+    let onTap: (DemoBanner) -> Void
+
+    var body: some View {
+        TabView {
+            ForEach(banners) { banner in
+                Button { onTap(banner) } label: {
+                    ZStack(alignment: .bottomLeading) {
+                        RemoteImage(url: banner.imageURL)
+                            .frame(height: 188)
+                            .clipped()
+                        LinearGradient(colors: [.clear, .black.opacity(0.82)], startPoint: .top, endPoint: .bottom)
+                        VStack(alignment: .leading, spacing: 7) {
+                            Text(banner.title)
+                                .font(.system(size: 25, weight: .black))
+                                .foregroundColor(.white)
+                            Text(banner.subtitle)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.78))
+                                .lineLimit(2)
+                            Label("Открыть событие", systemImage: "arrow.up.right")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(Color("Hot"), in: Capsule())
+                        }
+                        .padding(16)
+                    }
+                }
+                .buttonStyle(.plain)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .padding(.horizontal, 16)
+            }
+        }
+        .frame(height: 206)
+        .tabViewStyle(.page(indexDisplayMode: .automatic))
+    }
+}
+
+private struct EventRail: View {
+    let events: [PlayaEvent]
+    let onTap: (PlayaEvent) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionTitle(title: "События из рекомендаций", subtitle: "Из ленты сразу можно пойти")
+                .padding(.horizontal, 16)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(events) { event in
+                        Button { onTap(event) } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                RemoteImage(url: event.imageURL)
+                                    .frame(width: 178, height: 96)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                Text(event.title)
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .lineLimit(2)
+                                Text("\(event.dateText) · \(event.priceText)")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(Color("Hot"))
+                            }
+                            .padding(10)
+                            .frame(width: 198, alignment: .leading)
+                            .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
     }
 }
 
@@ -104,15 +230,21 @@ private struct PostCard: View {
     let post: PlayaPost
     let onComments: () -> Void
     let onReport: () -> Void
+    let onOpenEvent: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 13) {
             HStack(spacing: 10) {
                 AvatarView(url: post.author.avatarURL, fallback: String(post.author.name.prefix(1)))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.author.name)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white)
+                    HStack(spacing: 6) {
+                        Text(post.author.name)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white)
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(Color("Cyan"))
+                    }
                     Text(post.author.username.map { "@\($0)" } ?? post.createdText)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white.opacity(0.55))
@@ -132,18 +264,19 @@ private struct PostCard: View {
                 .foregroundColor(.white.opacity(0.92))
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let imageURL = post.imageURL {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    default:
-                        Color("Ink700")
-                    }
+            RemoteImage(url: post.imageURL)
+                .frame(height: 226)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            if post.eventId != nil {
+                Button(action: onOpenEvent) {
+                    Label("Перейти к мероприятию", systemImage: "ticket.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(Color("Hot"), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        .foregroundColor(.white)
                 }
-                .frame(height: 220)
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
             HStack(spacing: 18) {
@@ -152,9 +285,7 @@ private struct PostCard: View {
                     Label("\(post.commentsCount)", systemImage: "bubble.right")
                 }
                 Spacer()
-                if !post.createdText.isEmpty {
-                    Text(post.createdText)
-                }
+                Text(post.createdText)
             }
             .font(.system(size: 13, weight: .semibold))
             .foregroundColor(.white.opacity(0.65))
@@ -169,43 +300,83 @@ private struct PostCard: View {
     }
 }
 
-private struct ComposePostSheet: View {
-    @Binding var text: String
-    let isGuest: Bool
-    let onCancel: () -> Void
-    let onSubmit: () -> Void
+private struct SectionTitle: View {
+    let title: String
+    let subtitle: String
 
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                if isGuest {
-                    Text("Гость может читать ленту. Для публикации войдите через Apple.")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
+        HStack(alignment: .lastTextBaseline) {
+            Text(title)
+                .font(.system(size: 18, weight: .black))
+                .foregroundColor(.white)
+            Spacer()
+            Text(subtitle)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white.opacity(0.48))
+        }
+    }
+}
 
-                TextEditor(text: $text)
-                    .frame(minHeight: 180)
-                    .padding(8)
-                    .background(Color(uiColor: .secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .disabled(isGuest)
+struct RemoteImage: View {
+    let url: URL?
 
-                Spacer()
-            }
-            .padding(16)
-            .navigationTitle("Новый пост")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Отмена", action: onCancel)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Опубликовать", action: onSubmit)
-                        .disabled(isGuest || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
+    var body: some View {
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .success(let image):
+                image.resizable().scaledToFill()
+            default:
+                LinearGradient(
+                    colors: [Color("Ink800"), Color("Ink700"), Color("HotDeep").opacity(0.45)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
             }
         }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct EventDetailSheet: View {
+    let event: PlayaEvent
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                RemoteImage(url: event.imageURL)
+                    .frame(height: 240)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(event.category?.uppercased() ?? "EVENT")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundColor(Color("Hot"))
+                    Text(event.title)
+                        .font(.system(size: 30, weight: .black))
+                        .foregroundColor(.white)
+                    Text(event.description ?? "Событие Playa")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.72))
+                    Label("\(event.dateText) \(event.timeText) · \(event.location ?? "Алматы")", systemImage: "mappin.and.ellipse")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.72))
+                }
+
+                Button {
+                } label: {
+                    Label("Забронировать билет · \(event.priceText)", systemImage: "qrcode")
+                        .font(.system(size: 16, weight: .black))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                        .background(Color("Hot"), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .foregroundColor(.white)
+                }
+            }
+            .padding(16)
+        }
+        .background(Color("Ink900").ignoresSafeArea())
+        .navigationTitle("Мероприятие")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -215,7 +386,9 @@ struct AvatarView: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(Color("Hot").opacity(0.25))
+            Circle().fill(
+                LinearGradient(colors: [Color("Hot"), Color("Cyan").opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            )
             if let url {
                 AsyncImage(url: url) { phase in
                     switch phase {
