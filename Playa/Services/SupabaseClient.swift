@@ -108,6 +108,29 @@ final class SupabaseClient {
         }
     }
 
+    func restPost(path: String, body: [String: Any], query: [URLQueryItem] = []) async throws -> Data {
+        try await runAuthed { token in
+            var request = self.restRequest(path: path, query: query)
+            request.httpMethod = "POST"
+            request.setValue(self.anonKey, forHTTPHeaderField: "apikey")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("return=representation", forHTTPHeaderField: "Prefer")
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+            return request
+        }
+    }
+
+    func restDelete(path: String, query: [URLQueryItem] = []) async throws {
+        _ = try await runAuthed { token in
+            var request = self.restRequest(path: path, query: query)
+            request.httpMethod = "DELETE"
+            request.setValue(self.anonKey, forHTTPHeaderField: "apikey")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            return request
+        }
+    }
+
     /// Anonymous GET (uses anon key only). Used for public reads.
     func restGetAnon(path: String, query: [URLQueryItem] = []) async throws -> Data {
         var components = URLComponents(
@@ -154,6 +177,17 @@ final class SupabaseClient {
             let body = String(data: data, encoding: .utf8) ?? ""
             throw SupabaseError.serverError(status: http.statusCode, body: body)
         }
+    }
+
+    private func restRequest(path: String, query: [URLQueryItem]) -> URLRequest {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("rest/v1/\(path)"),
+            resolvingAgainstBaseURL: false
+        )!
+        if !query.isEmpty { components.queryItems = query }
+        var request = URLRequest(url: components.url!)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        return request
     }
 }
 

@@ -68,3 +68,11 @@ Outputs `Playa/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png`.
 - **V2.0** — Feed posts, comments, Create Event (UGC + Report/Block)
 - **V2.1** — Realtime chats (event chats, DMs)
 - **V2.2** — AI chats via Gemini proxy + admin panel
+## CI note
+
+The active TestFlight workflow is `.github/workflows/ios-build.yml` in this iOS repository.
+
+## Social MVP scope
+
+V1.0 now targets Login + Events + Feed + Comments + DMs + Event chats + Profile.
+V1.1 can add image upload, push notifications, and a full block list.

@@ -71,3 +71,25 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: NO
         ENABLE_BITCODE: NO
         SWIFT_OBJC_BRIDGING_HEADER: ""
+
+  PlayaTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PlayaTests
+    dependencies:
+      - target: Playa
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.playastudio.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Playa:
+    build:
+      targets:
+        Playa: all
+    test:
+      targets:
+        - PlayaTests
+      gatherCoverageData: false

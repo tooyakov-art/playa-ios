@@ -3,6 +3,7 @@ import SwiftUI
 struct EventsScreen: View {
     @EnvironmentObject private var auth: Auth
     @StateObject private var service: EventsService
+    @State private var selectedEvent: PlayaEvent?
 
     init() {
         // EventsService is created here so that it owns its own lifecycle per
@@ -26,7 +27,9 @@ struct EventsScreen: View {
                     ScrollView {
                         LazyVStack(spacing: 14) {
                             ForEach(service.events) { event in
-                                EventCard(event: event)
+                                EventCard(event: event) {
+                                    selectedEvent = event
+                                }
                             }
                         }
                         .padding(.horizontal, 16)
@@ -38,12 +41,16 @@ struct EventsScreen: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task { await service.reload() }
             .refreshable { await service.reload() }
+            .navigationDestination(item: $selectedEvent) { event in
+                EventChatView(event: event, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest)
+            }
         }
     }
 }
 
 struct EventCard: View {
     let event: PlayaEvent
+    let onOpenChat: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -104,6 +111,17 @@ struct EventCard: View {
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.6))
                 }
+
+                Button(action: onOpenChat) {
+                    Label("Чат события", systemImage: "bubble.left.and.bubble.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color("Hot"))
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .padding(.top, 8)
             }
             .padding(14)
         }

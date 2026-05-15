@@ -156,3 +156,12 @@ The build takes ~12–18 minutes. On success, the IPA appears in **TestFlight �
 | Build uploads but never appears in TestFlight | Check email — Apple often sends "Invalid Binary" reasons (missing Privacy Manifest entries, ITSAppUsesNonExemptEncryption missing, etc.) |
 | `Apple Sign-In` button hangs in TestFlight | Make sure capability is enabled on the App ID **and** included in the provisioning profile. |
 | `delete_own_account` returns 404 | SQL migration not applied. See step 1. |
+## Social MVP update
+
+Before submitting this build, apply these migrations in Supabase:
+
+- Web repo: `supabase/migrations/001_extend.sql`
+- Web repo: `supabase/migrations/20260424_social_onboarding.sql`
+- iOS repo: `supabase/002_content_reports.sql`
+
+The active GitHub Actions workflow is `.github/workflows/ios-build.yml` in the iOS repository. UGC is enabled in v1.0: posts, comments, direct chats, and event chats. Review notes should say that users can report posts and delete their account from Profile.
