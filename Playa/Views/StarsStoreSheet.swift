@@ -18,7 +18,7 @@ struct StarsStoreSheet: View {
                     VStack(spacing: 10) {
                         Image(systemName: "star.fill")
                             .font(.system(size: 92, weight: .black))
-                            .foregroundColor(
+                            .foregroundStyle(
                                 LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing)
                             )
                             .shadow(color: .yellow.opacity(0.35), radius: 22)
@@ -44,7 +44,7 @@ struct StarsStoreSheet: View {
                                 HStack(spacing: 14) {
                                     Image(systemName: "star.fill")
                                         .font(.system(size: 24, weight: .black))
-                                        .foregroundColor(
+                                        .foregroundStyle(
                                             LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing)
                                         )
                                     Text("\(package.stars.formatted(.number.grouping(.automatic))) звёзд")
