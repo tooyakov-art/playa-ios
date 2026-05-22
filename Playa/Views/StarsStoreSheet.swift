@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 struct StarsStoreSheet: View {
     @EnvironmentObject private var appState: AppState
@@ -6,121 +6,135 @@ struct StarsStoreSheet: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-            starField.ignoresSafeArea()
+            PlayaBackground()
+            starField.ignoresSafeArea().opacity(0.7)
 
             ScrollView {
-                VStack(spacing: 22) {
+                VStack(spacing: 24) {
                     topBar
-                        .padding(.horizontal, 22)
-                        .padding(.top, 18)
-
-                    VStack(spacing: 10) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 92, weight: .black))
-                            .foregroundStyle(
-                                LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing)
-                            )
-                            .shadow(color: .yellow.opacity(0.35), radius: 22)
-
-                        Text("Купить звёзды")
-                            .font(.system(size: 34, weight: .black))
-                            .foregroundColor(.white)
-
-                        Text("Билеты в Playa оплачиваются звёздами.")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white.opacity(0.72))
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.top, 8)
+                        .padding(.horizontal, 18)
+                        .padding(.top, 12)
 
                     VStack(spacing: 14) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 76, weight: .black))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [PlayaStyle.lime, PlayaStyle.ember],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: PlayaStyle.ember.opacity(0.45), radius: 22)
+
+                        Text("Купить звёзды")
+                            .font(.playaDisplay(32, weight: .black))
+                            .foregroundColor(.white)
+                            .tracking(-0.4)
+
+                        Text("Билеты в Playa оплачиваются звёздами.")
+                            .playaBody()
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(.horizontal, 32)
+                    }
+                    .padding(.top, 12)
+
+                    VStack(spacing: 10) {
                         ForEach(StarPackage.telegramStyle) { package in
-                            Button {
-                                withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
-                                    appState.buyStars(package: package)
-                                }
-                            } label: {
-                                HStack(spacing: 14) {
-                                    Image(systemName: "star.fill")
-                                        .font(.system(size: 24, weight: .black))
-                                        .foregroundStyle(
-                                            LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                        )
-                                    Text("\(package.stars.formatted(.number.grouping(.automatic))) звёзд")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.white)
-                                    Spacer()
-                                    Text(package.priceText)
-                                        .font(.system(size: 19, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.56))
-                                }
-                                .padding(.horizontal, 24)
-                                .frame(height: 78)
-                                .background(Color.white.opacity(0.14), in: Capsule())
-                            }
-                            .buttonStyle(.plain)
+                            packageRow(package)
                         }
                     }
-                    .padding(.horizontal, 22)
+                    .padding(.horizontal, 18)
 
-                    Button {
-                    } label: {
+                    Button { } label: {
                         HStack(spacing: 8) {
                             Text("Показать другие варианты")
                             Image(systemName: "chevron.down")
                         }
-                        .font(.system(size: 19, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 70)
-                        .background(Color.white.opacity(0.14), in: Capsule())
                     }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 22)
-                    .padding(.bottom, 24)
+                    .buttonStyle(PlayaGhostButton())
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 28)
                 }
             }
         }
     }
 
+    // MARK: - Pieces
+
     private var topBar: some View {
-        HStack(alignment: .top) {
-            Button("Закрыть") { dismiss() }
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .frame(height: 54)
-                .background(Color.white.opacity(0.12), in: Capsule())
+        HStack(alignment: .center) {
+            Button {
+                PlayaFeedback.selection()
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(PlayaIconButton(size: 42))
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("Баланс")
-                    .font(.system(size: 18, weight: .medium))
+            HStack(spacing: 8) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundColor(PlayaStyle.lime)
+                Text(appState.starBalance.formatted(.number.grouping(.automatic)))
+                    .font(.playaMono(15, weight: .bold))
                     .foregroundColor(.white)
-                HStack(spacing: 5) {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundColor(.yellow)
-                    Text("\(appState.starBalance.formatted(.number.grouping(.automatic)))")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                }
             }
+            .padding(.horizontal, 14)
+            .frame(height: 42)
+            .playaGlass(cornerRadius: 21)
         }
+    }
+
+    private func packageRow(_ package: StarPackage) -> some View {
+        Button {
+            PlayaFeedback.impact(.medium)
+            withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
+                appState.buyStars(package: package)
+            }
+            ToastCenter.shared.success("Зачислено \(package.stars.formatted(.number.grouping(.automatic))) ★")
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 18, weight: .heavy))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [PlayaStyle.lime, PlayaStyle.ember],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.08), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.14), lineWidth: 1))
+
+                Text("\(package.stars.formatted(.number.grouping(.automatic))) звёзд")
+                    .font(.playaSans(17, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text(package.priceText.uppercased())
+                    .playaLabel(color: PlayaStyle.bone.opacity(0.85))
+            }
+            .padding(.horizontal, 18)
+            .frame(height: 68)
+            .playaPoster()
+        }
+        .buttonStyle(.plain)
     }
 
     private var starField: some View {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 let seed = Int(timeline.date.timeIntervalSinceReferenceDate * 2)
-                for index in 0..<130 {
+                for index in 0..<140 {
                     let x = CGFloat((index * 47 + seed * 11) % 1000) / 1000 * size.width
                     let y = CGFloat((index * 83 + seed * 7) % 700) / 700 * min(size.height, 360)
                     let radius = CGFloat(1 + (index % 4))
                     let rect = CGRect(x: x, y: y, width: radius * 2, height: radius * 2)
-                    context.fill(Path(ellipseIn: rect), with: .color(.yellow.opacity(0.45 + Double(index % 4) * 0.12)))
+                    context.fill(Path(ellipseIn: rect), with: .color(.white.opacity(0.35 + Double(index % 4) * 0.10)))
                 }
             }
         }

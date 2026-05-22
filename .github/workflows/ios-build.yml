@@ -40,6 +40,9 @@ jobs:
       - name: Install xcodegen
         run: brew install xcodegen
 
+      - name: Fetch POSTER v2 fonts
+        run: bash scripts/fetch-fonts.sh
+
       - name: Generate Xcode project
         run: xcodegen generate
 

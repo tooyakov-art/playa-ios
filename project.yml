@@ -23,6 +23,9 @@ targets:
       - path: Playa
     resources:
       - path: Playa/Assets.xcassets
+      - path: Playa/Resources/Fonts
+        optional: true
+        buildPhase: resources
     info:
       path: Playa/Info.plist
       properties:
@@ -42,6 +45,23 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         UIUserInterfaceStyle: Dark
+        UIAppFonts:
+          - Unbounded-Light.ttf
+          - Unbounded-Regular.ttf
+          - Unbounded-Medium.ttf
+          - Unbounded-SemiBold.ttf
+          - Unbounded-Bold.ttf
+          - Unbounded-Black.ttf
+          - SpaceGrotesk-Light.ttf
+          - SpaceGrotesk-Regular.ttf
+          - SpaceGrotesk-Medium.ttf
+          - SpaceGrotesk-SemiBold.ttf
+          - SpaceGrotesk-Bold.ttf
+          - JetBrainsMono-Regular.ttf
+          - JetBrainsMono-Medium.ttf
+          - JetBrainsMono-SemiBold.ttf
+          - JetBrainsMono-Bold.ttf
+          - InstrumentSerif-Italic.ttf
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.social-networking
         CFBundleURLTypes:

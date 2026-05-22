@@ -12,3 +12,7 @@ _signing/
 *.mobileprovision
 *.p8
 private_keys/
+
+# POSTER v2 fonts — fetched at build time via scripts/fetch-fonts.sh
+Playa/Resources/Fonts/*.ttf
+Playa/Resources/Fonts/*.otf
