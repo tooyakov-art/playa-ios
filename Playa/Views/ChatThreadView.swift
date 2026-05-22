@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct ChatThreadView: View {
     let chat: ChatPreview
@@ -28,10 +28,10 @@ struct ChatThreadView: View {
                         HStack(spacing: 6) {
                             Text(chat.otherUser.name)
                                 .font(.playaSans(15, weight: .bold))
-                                .foregroundStyle(.white)
+                                .foregroundColor(.white)
                             Image(systemName: "checkmark.seal.fill")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(PlayaStyle.cyan)
+                                .foregroundColor(PlayaStyle.cyan)
                         }
                         Text("@\(chat.otherUser.username ?? "playa")")
                             .playaLabel(color: .white.opacity(0.5))
@@ -47,7 +47,7 @@ struct ChatThreadView: View {
                         .overlay(
                             Rectangle()
                                 .frame(height: 1)
-                                .foregroundStyle(PlayaStyle.hairline),
+                                .foregroundColor(PlayaStyle.hairline),
                             alignment: .bottom
                         )
                 )
@@ -72,7 +72,7 @@ struct ChatThreadView: View {
                 if let errorMessage {
                     Text(errorMessage)
                         .playaCaption()
-                        .foregroundStyle(PlayaStyle.hot)
+                        .foregroundColor(PlayaStyle.hot)
                         .padding(.horizontal, 14)
                         .padding(.bottom, 4)
                 }
@@ -80,7 +80,7 @@ struct ChatThreadView: View {
                 HStack(spacing: 10) {
                     TextField("", text: $text, prompt: Text("Сообщение").foregroundColor(.white.opacity(0.4)), axis: .vertical)
                         .font(.playaSans(15, weight: .regular))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                         .tint(PlayaStyle.hot)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 12)
@@ -182,7 +182,7 @@ struct MessageBubble: View {
 
             Text(message.text)
                 .font(.playaSans(15, weight: .regular))
-                .foregroundStyle(isMine ? .white : .white)
+                .foregroundColor(isMine ? .white : .white)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
@@ -221,7 +221,7 @@ private struct ChatSendButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 17, weight: .heavy))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
             .frame(width: 46, height: 46)
             .background(
                 Circle()

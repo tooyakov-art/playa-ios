@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct ProfileScreen: View {
     @EnvironmentObject private var auth: Auth
@@ -97,12 +97,12 @@ struct ProfileScreen: View {
         return (
             Text(first + (rest.isEmpty ? "" : "\n"))
                 .font(.playaDisplay(38, weight: .black))
-                .foregroundStyle(.white)
+                .foregroundColor(.white)
             +
             Text(rest)
                 .font(.playaSerif(42))
                 .italic()
-                .foregroundStyle(PlayaStyle.hot)
+                .foregroundColor(PlayaStyle.hot)
         )
         .tracking(-0.5)
         .lineSpacing(-2)
@@ -139,7 +139,7 @@ struct ProfileScreen: View {
             Text("О профиле").playaLabel()
             Text(profileBio)
                 .playaBody()
-                .foregroundStyle(.white.opacity(0.72))
+                .foregroundColor(.white.opacity(0.72))
                 .lineSpacing(3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -170,7 +170,7 @@ struct ProfileScreen: View {
                             }
                             Text(event.title)
                                 .font(.playaSans(13, weight: .bold))
-                                .foregroundStyle(.white)
+                                .foregroundColor(.white)
                                 .lineLimit(2)
                         }
                         .padding(10)
@@ -223,7 +223,7 @@ struct ProfileScreen: View {
         VStack(spacing: 6) {
             Text(value)
                 .font(.playaDisplay(22, weight: .black))
-                .foregroundStyle(.white)
+                .foregroundColor(.white)
                 .tracking(-0.5)
             Text(label).playaLabel(color: .white.opacity(0.5))
         }
@@ -235,7 +235,7 @@ struct ProfileScreen: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(color)
+                .foregroundColor(color)
                 .frame(width: 38, height: 38)
                 .background(color.opacity(0.14), in: Circle())
                 .overlay(Circle().stroke(color.opacity(0.32), lineWidth: 1))
@@ -243,7 +243,7 @@ struct ProfileScreen: View {
                 Text(title).playaLabel(color: .white.opacity(0.45))
                 Text(value)
                     .font(.playaSans(16, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                     .lineLimit(1)
             }
             Spacer()
@@ -264,7 +264,7 @@ private struct SettingsValueInline: View {
             Spacer()
             Text(value)
                 .font(.playaSans(14, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundColor(.white)
                 .lineLimit(1)
         }
     }

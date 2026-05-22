@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct EventsScreen: View {
     @EnvironmentObject private var auth: Auth
@@ -65,16 +65,16 @@ private struct EventsHeader: View {
             (
                 Text("Сегодня\nв ")
                     .font(.playaDisplay(40, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                 +
                 Text("городе")
                     .font(.playaSerif(44))
                     .italic()
-                    .foregroundStyle(PlayaStyle.hot)
+                    .foregroundColor(PlayaStyle.hot)
                 +
                 Text(".")
                     .font(.playaDisplay(40, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
             )
             .tracking(-0.6)
             .lineSpacing(-4)
@@ -158,14 +158,14 @@ struct EventCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(event.title)
                     .font(.playaDisplay(22, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                     .lineLimit(2)
                     .tracking(-0.3)
 
                 if let description = event.description, !description.isEmpty {
                     Text(description)
                         .playaBody()
-                        .foregroundStyle(.white.opacity(0.68))
+                        .foregroundColor(.white.opacity(0.68))
                         .lineLimit(2)
                 }
 
@@ -187,7 +187,7 @@ struct EventCard: View {
                         appState.toggleSavedEvent(eventId: event.id)
                     } label: {
                         Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                            .foregroundStyle(isSaved ? PlayaStyle.hot : .white)
+                            .foregroundColor(isSaved ? PlayaStyle.hot : .white)
                     }
                     .buttonStyle(PlayaIconButton(size: 52))
                 }
@@ -209,7 +209,7 @@ struct EmptyStateView: View {
         VStack(spacing: 14) {
             Image(systemName: "sparkles")
                 .font(.system(size: 32, weight: .bold))
-                .foregroundStyle(PlayaStyle.hot)
+                .foregroundColor(PlayaStyle.hot)
             Text(title)
                 .playaH3()
             Text(message)

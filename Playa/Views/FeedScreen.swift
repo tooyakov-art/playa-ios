@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct FeedScreen: View {
     @EnvironmentObject private var auth: Auth
@@ -88,16 +88,16 @@ struct FeedScreen: View {
             (
                 Text("Город ")
                     .font(.playaDisplay(40, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                 +
                 Text("говорит")
                     .font(.playaSerif(44))
                     .italic()
-                    .foregroundStyle(PlayaStyle.hot)
+                    .foregroundColor(PlayaStyle.hot)
                 +
                 Text(".")
                     .font(.playaDisplay(40, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
             )
             .tracking(-0.6)
             .multilineTextAlignment(.leading)
@@ -105,7 +105,7 @@ struct FeedScreen: View {
 
             Text("Фильмы, события и посты от площадок и людей в твоём городе.")
                 .playaBody()
-                .foregroundStyle(.white.opacity(0.62))
+                .foregroundColor(.white.opacity(0.62))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -357,23 +357,14 @@ private struct SectionTitle: View {
     }
 }
 
+/// Legacy entry point for existing call sites — now backed by `CachedAsyncImage`,
+/// so every Playa image goes through `ImageCache.shared` automatically.
 struct RemoteImage: View {
     let url: URL?
 
     var body: some View {
-        AsyncImage(url: url) { phase in
-            switch phase {
-            case .success(let image):
-                image.resizable().scaledToFill()
-            default:
-                LinearGradient(
-                    colors: [Color("Ink800"), Color("Ink700"), Color("HotDeep").opacity(0.45)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-        }
-        .frame(maxWidth: .infinity)
+        CachedAsyncImage(url: url, contentMode: .fill)
+            .frame(maxWidth: .infinity)
     }
 }
 
@@ -419,19 +410,19 @@ struct EventDetailSheet: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(event.title)
                         .font(.playaDisplay(32, weight: .black))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                         .tracking(-0.5)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(event.description ?? "Событие Playa")
                         .playaBody()
-                        .foregroundStyle(.white.opacity(0.72))
+                        .foregroundColor(.white.opacity(0.72))
 
                     metaGrid
 
                     HStack(spacing: 10) {
                         HStack(spacing: 6) {
-                            Image(systemName: "star.fill").foregroundStyle(PlayaStyle.lime)
+                            Image(systemName: "star.fill").foregroundColor(PlayaStyle.lime)
                             Text("Баланс \(appState.starBalance.formatted(.number.grouping(.automatic)))")
                         }
                         .playaLabel(color: .white.opacity(0.88))
@@ -469,7 +460,7 @@ struct EventDetailSheet: View {
                 if let ticketMessage {
                     Text(ticketMessage)
                         .playaCaption()
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundColor(.white.opacity(0.7))
                 }
             }
             .padding(16)
@@ -499,7 +490,7 @@ struct EventDetailSheet: View {
             Text(label).playaLabel(color: .white.opacity(0.5))
             Text(value)
                 .font(.playaSans(15, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundColor(.white)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

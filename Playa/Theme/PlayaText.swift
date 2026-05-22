@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 // MARK: - Typographic modifiers
 
@@ -7,7 +7,7 @@ private struct PlayaHeroModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.playaDisplay(size, weight: .black))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
             .tracking(-0.5)
             .lineSpacing(-2)
     }
@@ -17,7 +17,7 @@ private struct PlayaH1Modifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.playaDisplay(40, weight: .black))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
             .tracking(-0.4)
     }
 }
@@ -26,7 +26,7 @@ private struct PlayaH2Modifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.playaDisplay(28, weight: .bold))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
     }
 }
 
@@ -34,7 +34,7 @@ private struct PlayaH3Modifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.playaSans(20, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
     }
 }
 
@@ -42,7 +42,7 @@ private struct PlayaBodyModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.playaSans(15, weight: .regular))
-            .foregroundStyle(.white.opacity(0.92))
+            .foregroundColor(.white.opacity(0.92))
     }
 }
 
@@ -50,7 +50,7 @@ private struct PlayaCaptionModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.playaSans(13, weight: .regular))
-            .foregroundStyle(.white.opacity(0.62))
+            .foregroundColor(.white.opacity(0.62))
     }
 }
 
@@ -61,7 +61,7 @@ private struct PlayaLabelModifier: ViewModifier {
             .font(.playaMono(11, weight: .medium))
             .textCase(.uppercase)
             .tracking(1.5)
-            .foregroundStyle(color)
+            .foregroundColor(color)
     }
 }
 
@@ -72,7 +72,7 @@ private struct PlayaSerifModifier: ViewModifier {
         content
             .font(.playaSerif(size))
             .italic()
-            .foregroundStyle(color)
+            .foregroundColor(color)
     }
 }
 

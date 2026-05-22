@@ -14,14 +14,18 @@ final class Auth: ObservableObject {
     private var webAuthSession: ASWebAuthenticationSession?
     private let presentationProvider = WebAuthPresentationProvider()
 
+    // Secret tokens — moved to Keychain (`Keychain.set/get`).
     private let tokenKey = "playa.session.access_token"
     private let refreshKey = "playa.session.refresh_token"
+    // Non-secret identifiers — stay in UserDefaults for fast unauthenticated reads.
     private let userIdKey = "playa.session.user_id"
     private let emailKey = "playa.session.email"
     private let guestKey = "playa.session.guest"
     private let localProviderKey = "playa.session.local_provider"
+    private let migrationFlagKey = "playa.session.keychain_migrated_v1"
 
     init() {
+        migrateLegacyTokensToKeychain()
         loadStoredSession()
         supabase.onSessionRefreshed = { [weak self] session in
             Task { @MainActor in self?.store(session: session) }
@@ -81,6 +85,7 @@ final class Auth: ObservableObject {
         isLocalAccount = false
         userEmail = nil
         userId = nil
+        ImageCache.shared.clearAll()
     }
 
     func deleteAccount() async throws {
@@ -93,6 +98,23 @@ final class Auth: ObservableObject {
     }
 
     // MARK: - Persistence
+
+    /// One-time pass — moves any pre-existing tokens out of UserDefaults
+    /// (where they sat in plaintext) into the Keychain.
+    private func migrateLegacyTokensToKeychain() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: migrationFlagKey) else { return }
+
+        if let legacyAccess = defaults.string(forKey: tokenKey) {
+            Keychain.set(legacyAccess, for: tokenKey)
+            defaults.removeObject(forKey: tokenKey)
+        }
+        if let legacyRefresh = defaults.string(forKey: refreshKey) {
+            Keychain.set(legacyRefresh, for: refreshKey)
+            defaults.removeObject(forKey: refreshKey)
+        }
+        defaults.set(true, forKey: migrationFlagKey)
+    }
 
     private func loadStoredSession() {
         let defaults = UserDefaults.standard
@@ -113,13 +135,13 @@ final class Auth: ObservableObject {
             return
         }
 
-        guard let token = defaults.string(forKey: tokenKey),
+        guard let token = Keychain.get(tokenKey),
               let uid = defaults.string(forKey: userIdKey)
         else {
             return
         }
         supabase.accessToken = token
-        supabase.refreshToken = defaults.string(forKey: refreshKey)
+        supabase.refreshToken = Keychain.get(refreshKey)
         userId = uid
         userEmail = defaults.string(forKey: emailKey)
         isAuthenticated = true
@@ -129,8 +151,12 @@ final class Auth: ObservableObject {
 
     private func store(session: SupabaseSession) {
         let defaults = UserDefaults.standard
-        defaults.set(session.accessToken, forKey: tokenKey)
-        defaults.set(session.refreshToken, forKey: refreshKey)
+        Keychain.set(session.accessToken, for: tokenKey)
+        if let refresh = session.refreshToken {
+            Keychain.set(refresh, for: refreshKey)
+        } else {
+            Keychain.remove(refreshKey)
+        }
         defaults.set(session.user.id, forKey: userIdKey)
         defaults.set(session.user.email, forKey: emailKey)
         defaults.removeObject(forKey: guestKey)
@@ -163,8 +189,8 @@ final class Auth: ObservableObject {
 
     private func clearStorage() {
         let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: tokenKey)
-        defaults.removeObject(forKey: refreshKey)
+        Keychain.remove(tokenKey)
+        Keychain.remove(refreshKey)
         defaults.removeObject(forKey: userIdKey)
         defaults.removeObject(forKey: emailKey)
         defaults.removeObject(forKey: guestKey)

@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import UIKit
 
 struct MainTabView: View {
@@ -31,7 +31,13 @@ struct MainTabView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            TabView(selection: $appState.selectedTab) {
+            TabView(selection: Binding(
+                get: { appState.selectedTab },
+                set: { newTab in
+                    if newTab != appState.selectedTab { PlayaFeedback.selection() }
+                    appState.selectedTab = newTab
+                }
+            )) {
                 FeedScreen()
                     .tabItem { Label("Главная", systemImage: "house.fill") }
                     .tag(AppState.Tab.feed)
@@ -51,11 +57,12 @@ struct MainTabView: View {
             .tint(Color("Hot"))
 
             Button {
+                PlayaFeedback.impact(.medium)
                 appState.createEventPresented = true
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 24, weight: .heavy))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                     .frame(width: 58, height: 58)
                     .background(
                         Circle()

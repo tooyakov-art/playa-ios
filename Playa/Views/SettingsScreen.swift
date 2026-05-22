@@ -108,13 +108,15 @@ struct SettingsScreen: View {
     }
 
     private var languageSection: some View {
-        Section("Язык") {
+        Section {
             Picker("Язык приложения", selection: $settings.language) {
                 ForEach(AppLanguage.allCases) { language in
                     Text(language.title).tag(language)
                 }
             }
             .pickerStyle(.inline)
+        } header: {
+            Text("Язык")
         } footer: {
             Text("Сейчас переключатель сохраняет выбранный язык. Полная локализация всех старых экранов пойдет отдельным проходом.")
         }
@@ -122,7 +124,7 @@ struct SettingsScreen: View {
     }
 
     private var subscriptionSection: some View {
-        Section("Подписка") {
+        Section {
             ForEach(SubscriptionTier.allCases) { tier in
                 Button {
                     settings.subscriptionTier = tier
@@ -147,6 +149,8 @@ struct SettingsScreen: View {
                     .foregroundColor(.white)
                 }
             }
+        } header: {
+            Text("Подписка")
         } footer: {
             Text("В TestFlight это статус подписки. Реальная оплата подключается через StoreKit после создания продуктов в App Store Connect.")
         }

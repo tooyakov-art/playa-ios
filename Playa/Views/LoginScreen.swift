@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import AuthenticationServices
 
 struct LoginScreen: View {
@@ -76,16 +76,16 @@ struct LoginScreen: View {
             (
                 Text("Город — ")
                     .font(.playaDisplay(46, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                 +
                 Text("это")
                     .font(.playaSerif(50))
                     .italic()
-                    .foregroundStyle(PlayaStyle.hot)
+                    .foregroundColor(PlayaStyle.hot)
                 +
                 Text(" ты.")
                     .font(.playaDisplay(46, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
             )
             .tracking(-0.6)
             .lineSpacing(-2)
@@ -122,7 +122,7 @@ struct LoginScreen: View {
                     } else {
                         Text("G")
                             .font(.playaSans(20, weight: .bold))
-                            .foregroundStyle(PlayaStyle.ink900)
+                            .foregroundColor(PlayaStyle.ink900)
                     }
                     Text("Войти через Google")
                 }
@@ -133,16 +133,16 @@ struct LoginScreen: View {
             if let error = errorMessage {
                 Text(error)
                     .playaCaption()
-                    .foregroundStyle(PlayaStyle.hot)
+                    .foregroundColor(PlayaStyle.hot)
                     .multilineTextAlignment(.center)
                     .padding(.top, 4)
             }
 
             HStack(spacing: 12) {
                 Link("Privacy", destination: PlayaConfig.privacyURL)
-                Circle().frame(width: 3, height: 3).foregroundStyle(.white.opacity(0.25))
+                Circle().frame(width: 3, height: 3).foregroundColor(.white.opacity(0.25))
                 Link("Terms", destination: PlayaConfig.termsURL)
-                Circle().frame(width: 3, height: 3).foregroundStyle(.white.opacity(0.25))
+                Circle().frame(width: 3, height: 3).foregroundColor(.white.opacity(0.25))
                 Button("Статус базы") { showDiagnostics = true }
             }
             .playaLabel(color: .white.opacity(0.5))

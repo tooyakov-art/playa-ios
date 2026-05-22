@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 /// Apple-style buttons, but tuned to POSTER v2:
 /// - height 52pt
@@ -17,7 +17,7 @@ struct PlayaPrimaryButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.playaSans(16, weight: .bold))
-            .foregroundStyle(Color.black)
+            .foregroundColor(Color.black)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(height: kPlayaButtonHeight)
             .padding(.horizontal, fullWidth ? 0 : 20)
@@ -44,7 +44,7 @@ struct PlayaBoneButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.playaSans(16, weight: .semibold))
-            .foregroundStyle(PlayaStyle.ink900)
+            .foregroundColor(PlayaStyle.ink900)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(height: kPlayaButtonHeight)
             .padding(.horizontal, fullWidth ? 0 : 20)
@@ -66,7 +66,7 @@ struct PlayaGhostButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.playaSans(16, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(height: kPlayaButtonHeight)
             .padding(.horizontal, fullWidth ? 0 : 20)
@@ -91,7 +91,7 @@ struct PlayaInkButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.playaSans(16, weight: .semibold))
-            .foregroundStyle(PlayaStyle.bone)
+            .foregroundColor(PlayaStyle.bone)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(height: kPlayaButtonHeight)
             .padding(.horizontal, fullWidth ? 0 : 20)
@@ -113,7 +113,7 @@ struct PlayaIconButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
             .frame(width: size, height: size)
             .playaGlassCircle()
             .opacity(configuration.isPressed ? 0.78 : 1)
@@ -132,7 +132,7 @@ struct PlayaChipButton: ButtonStyle {
             .font(.playaMono(11, weight: .medium))
             .textCase(.uppercase)
             .tracking(1.4)
-            .foregroundStyle(active ? PlayaStyle.ink900 : .white)
+            .foregroundColor(active ? PlayaStyle.ink900 : .white)
             .padding(.horizontal, 14)
             .frame(height: 32)
             .background(

@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct MatchesListView: View {
     @EnvironmentObject private var auth: Auth
@@ -84,16 +84,16 @@ struct MatchesListView: View {
             (
                 Text("Город ")
                     .font(.playaDisplay(40, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
                 +
                 Text("на связи")
                     .font(.playaSerif(44))
                     .italic()
-                    .foregroundStyle(PlayaStyle.hot)
+                    .foregroundColor(PlayaStyle.hot)
                 +
                 Text(".")
                     .font(.playaDisplay(40, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundColor(.white)
             )
             .tracking(-0.6)
             .multilineTextAlignment(.leading)
@@ -124,10 +124,10 @@ private struct ChatPreviewRow: View {
                 HStack(spacing: 6) {
                     Text(chat.otherUser.name)
                         .font(.playaSans(15, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(PlayaStyle.cyan)
+                        .foregroundColor(PlayaStyle.cyan)
                 }
                 Text(chat.subtitle)
                     .playaCaption()
@@ -136,7 +136,7 @@ private struct ChatPreviewRow: View {
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(.white.opacity(0.3))
+                .foregroundColor(.white.opacity(0.3))
         }
         .padding(14)
         .playaPoster()
@@ -154,10 +154,10 @@ private struct CompanyRow: View {
                 HStack(spacing: 6) {
                     Text(person.name)
                         .font(.playaSans(15, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(PlayaStyle.cyan)
+                        .foregroundColor(PlayaStyle.cyan)
                 }
                 Text("@\(person.username ?? "playa")")
                     .playaLabel(color: .white.opacity(0.5))
@@ -165,7 +165,7 @@ private struct CompanyRow: View {
             Spacer()
             Image(systemName: "arrow.up.right")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(.white.opacity(0.3))
+                .foregroundColor(.white.opacity(0.3))
         }
         .padding(14)
         .playaPoster()

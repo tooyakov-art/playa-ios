@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct EventChatView: View {
     let event: PlayaEvent
@@ -25,7 +25,7 @@ struct EventChatView: View {
                     Text("Чат события").playaLabel()
                     Text(event.title)
                         .font(.playaDisplay(20, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                         .tracking(-0.3)
                         .lineLimit(2)
                 }
@@ -39,7 +39,7 @@ struct EventChatView: View {
                         .overlay(
                             Rectangle()
                                 .frame(height: 1)
-                                .foregroundStyle(PlayaStyle.hairline),
+                                .foregroundColor(PlayaStyle.hairline),
                             alignment: .bottom
                         )
                 )
@@ -64,7 +64,7 @@ struct EventChatView: View {
                 if let errorMessage {
                     Text(errorMessage)
                         .playaCaption()
-                        .foregroundStyle(PlayaStyle.hot)
+                        .foregroundColor(PlayaStyle.hot)
                         .padding(.horizontal, 14)
                         .padding(.bottom, 4)
                 }
@@ -72,7 +72,7 @@ struct EventChatView: View {
                 HStack(spacing: 10) {
                     TextField("", text: $text, prompt: Text("Сообщение в событие").foregroundColor(.white.opacity(0.4)), axis: .vertical)
                         .font(.playaSans(15, weight: .regular))
-                        .foregroundStyle(.white)
+                        .foregroundColor(.white)
                         .tint(PlayaStyle.hot)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 12)
@@ -171,7 +171,7 @@ private struct SendButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 17, weight: .heavy))
-            .foregroundStyle(.white)
+            .foregroundColor(.white)
             .frame(width: 46, height: 46)
             .background(
                 Circle()
