@@ -7,11 +7,15 @@
 #
 # Run from the repo root: `bash scripts/fetch-fonts.sh`.
 
-set -euo pipefail
+# Note: no `-e`. A missing/renamed upstream font should not break the whole
+# build — we'd rather ship with a system fallback than fail CI.
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$ROOT/Playa/Resources/Fonts"
 mkdir -p "$DEST"
+
+failures=0
 
 fetch() {
     local url="$1"
@@ -21,7 +25,11 @@ fetch() {
         return
     fi
     echo "fetching: $out"
-    curl -fsSL --retry 3 --retry-delay 2 -o "$DEST/$out" "$url"
+    if ! curl -fsSL --retry 3 --retry-delay 2 -o "$DEST/$out" "$url"; then
+        echo "  ! failed: $url"
+        rm -f "$DEST/$out"
+        failures=$((failures + 1))
+    fi
 }
 
 # Unbounded — display family (Google Fonts, OFL)
@@ -33,8 +41,8 @@ fetch "$UNBOUNDED_BASE/Unbounded-SemiBold.ttf" Unbounded-SemiBold.ttf
 fetch "$UNBOUNDED_BASE/Unbounded-Bold.ttf"     Unbounded-Bold.ttf
 fetch "$UNBOUNDED_BASE/Unbounded-Black.ttf"    Unbounded-Black.ttf
 
-# Space Grotesk — body sans
-SG_BASE="https://raw.githubusercontent.com/floriankarsten/space-grotesk/master/fonts/ttf"
+# Space Grotesk — body sans (static cuts live in fonts/ttf/static/)
+SG_BASE="https://raw.githubusercontent.com/floriankarsten/space-grotesk/master/fonts/ttf/static"
 fetch "$SG_BASE/SpaceGrotesk-Light.ttf"        SpaceGrotesk-Light.ttf
 fetch "$SG_BASE/SpaceGrotesk-Regular.ttf"      SpaceGrotesk-Regular.ttf
 fetch "$SG_BASE/SpaceGrotesk-Medium.ttf"       SpaceGrotesk-Medium.ttf
@@ -52,5 +60,6 @@ fetch "$JBM_BASE/JetBrainsMono-Bold.ttf"       JetBrainsMono-Bold.ttf
 fetch "https://raw.githubusercontent.com/Instrument/instrument-serif/main/fonts/ttf/InstrumentSerif-Italic.ttf" \
       InstrumentSerif-Italic.ttf
 
-echo "Fonts ready in $DEST"
-ls -1 "$DEST"
+echo "Fonts ready in $DEST (failures: $failures)"
+ls -1 "$DEST" || true
+exit 0

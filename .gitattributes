@@ -1,0 +1,10 @@
+# Shell scripts must keep LF endings so they run on macOS/Linux runners
+# (CR characters in the shebang line are a classic CI pitfall on Windows
+# checkouts).
+*.sh text eol=lf
+
+# Swift sources stay as the OS uses them, but normalise to LF in git.
+*.swift text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.plist text eol=lf
