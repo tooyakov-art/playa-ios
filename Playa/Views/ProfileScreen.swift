@@ -3,50 +3,39 @@ import SwiftUI
 struct ProfileScreen: View {
     @EnvironmentObject private var auth: Auth
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var settings: SettingsStore
+
     @AppStorage("playa.profile.name") private var profileName = "Адильхан Таргетолог"
     @AppStorage("playa.profile.username") private var profileUsername = "adilkhan.playa"
     @AppStorage("playa.profile.city") private var profileCity = "Алматы"
-    @AppStorage("playa.profile.bio") private var profileBio = "Персональный профиль Playa: рекомендации, билеты, QR, чаты событий и посты от компаний. Тут будет нормальная витрина пользователя после регистрации."
+    @AppStorage("playa.profile.bio") private var profileBio = "Персональный профиль Playa: рекомендации, билеты, QR, чаты событий и посты от компаний."
 
     @State private var isEditingProfile = false
-    @State private var deleteStage: DeleteStage = .idle
-    @State private var errorMessage: String?
-
-    private enum DeleteStage {
-        case idle
-        case firstConfirm
-        case finalConfirm
-        case deleting
-    }
+    @State private var settingsPresented = false
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color("Ink900").ignoresSafeArea()
+                PlayaBackground()
 
                 ScrollView {
                     VStack(spacing: 18) {
                         hero
                         stats
+                        profileHighlights
                         bio
                         gallery
-                        accountControls
+                        profileActions
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
-                    .padding(.bottom, 96)
+                    .padding(.bottom, 110)
                 }
             }
-            .navigationTitle("Профиль")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Изм.") { isEditingProfile = true }
-                        .font(.system(size: 15, weight: .bold))
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                }
+            .sheet(isPresented: $settingsPresented) {
+                NavigationStack { SettingsScreen() }
             }
             .sheet(isPresented: $isEditingProfile) {
                 NavigationStack {
@@ -58,210 +47,225 @@ struct ProfileScreen: View {
                     )
                 }
             }
-            .confirmationDialog(
-                "Удалить аккаунт?",
-                isPresented: Binding(get: { deleteStage == .firstConfirm }, set: { if !$0 { deleteStage = .idle } }),
-                titleVisibility: .visible
-            ) {
-                Button("Продолжить", role: .destructive) {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        deleteStage = .finalConfirm
-                    }
-                }
-                Button("Отмена", role: .cancel) { deleteStage = .idle }
-            } message: {
-                Text("Аккаунт и связанные данные будут удалены.")
-            }
-            .confirmationDialog(
-                "Точно удалить?",
-                isPresented: Binding(get: { deleteStage == .finalConfirm }, set: { if !$0 { deleteStage = .idle } }),
-                titleVisibility: .visible
-            ) {
-                Button("Удалить навсегда", role: .destructive) {
-                    Task { await runDelete() }
-                }
-                Button("Отмена", role: .cancel) { deleteStage = .idle }
-            } message: {
-                Text("После удаления восстановить профиль нельзя.")
-            }
         }
     }
 
     private var hero: some View {
-        ZStack(alignment: .bottomLeading) {
-            RemoteImage(url: URL(string: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80"))
-                .frame(height: 360)
-                .clipped()
+        VStack(alignment: .leading, spacing: 16) {
+            // Top action row: settings + edit
+            HStack {
+                HStack(spacing: 8) {
+                    Text("Профиль")
+                    Text("·")
+                    Text(profileCity.uppercased())
+                }
+                .playaLabel()
 
-            LinearGradient(colors: [.clear, .black.opacity(0.86)], startPoint: .top, endPoint: .bottom)
+                Spacer()
 
-            VStack(alignment: .leading, spacing: 10) {
-                AvatarView(url: nil, fallback: "А")
-                    .frame(width: 74, height: 74)
-                    .overlay(Circle().stroke(Color.white.opacity(0.7), lineWidth: 2))
+                Button { settingsPresented = true } label: {
+                    Image(systemName: "gearshape.fill")
+                }
+                .buttonStyle(PlayaIconButton(size: 40))
 
-                Text(profileName)
-                    .font(.system(size: 31, weight: .black))
-                    .foregroundColor(.white)
+                Button { isEditingProfile = true } label: {
+                    Image(systemName: "pencil")
+                }
+                .buttonStyle(PlayaIconButton(size: 40))
+            }
+
+            // Avatar + name with serif italic surname
+            VStack(alignment: .leading, spacing: 14) {
+                AvatarView(url: nil, fallback: String(profileName.prefix(1)))
+                    .frame(width: 84, height: 84)
+                    .playaGlassCircle()
+
+                heroName
 
                 Text("@\(profileUsername)")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white.opacity(0.68))
-
-                HStack(spacing: 10) {
-                    Label(profileCity, systemImage: "mappin.and.ellipse")
-                    Label("Создатель событий", systemImage: "sparkles")
-                }
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.white.opacity(0.76))
+                    .playaLabel(color: .white.opacity(0.6))
             }
-            .padding(18)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(.top, 6)
+    }
+
+    private var heroName: some View {
+        let parts = profileName.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true).map(String.init)
+        let first = parts.first ?? profileName
+        let rest = parts.count > 1 ? parts[1] : ""
+
+        return (
+            Text(first + (rest.isEmpty ? "" : "\n"))
+                .font(.playaDisplay(38, weight: .black))
+                .foregroundStyle(.white)
+            +
+            Text(rest)
+                .font(.playaSerif(42))
+                .italic()
+                .foregroundStyle(PlayaStyle.hot)
+        )
+        .tracking(-0.5)
+        .lineSpacing(-2)
+        .multilineTextAlignment(.leading)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var stats: some View {
-        HStack(spacing: 10) {
-            stat("24K", "подписчиков")
-            stat("252", "подписок")
-            stat("732", "активности")
+        HStack(spacing: 0) {
+            stat("24K", "Подписчиков")
+            Divider().background(PlayaStyle.hairline).frame(height: 56)
+            stat("252", "Подписки")
+            Divider().background(PlayaStyle.hairline).frame(height: 56)
+            stat("\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))", "Событий")
+        }
+        .playaPoster()
+    }
+
+    private var profileHighlights: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                highlight(title: "Подписка", value: settings.subscriptionTier.title, icon: "crown.fill", color: PlayaStyle.hot)
+                highlight(title: "Звёзды", value: appState.starBalance.formatted(.number.grouping(.automatic)), icon: "star.fill", color: PlayaStyle.lime)
+            }
+            HStack(spacing: 10) {
+                highlight(title: "Билеты", value: "\(appState.purchasedTicketEventIds.count)", icon: "ticket.fill", color: PlayaStyle.ember)
+                highlight(title: "Сохранено", value: "\(appState.savedEventIds.count)", icon: "bookmark.fill", color: PlayaStyle.cyan)
+            }
         }
     }
 
     private var bio: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("О профиле")
-                .font(.system(size: 18, weight: .black))
-                .foregroundColor(.white)
+            Text("О профиле").playaLabel()
             Text(profileBio)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.68))
+                .playaBody()
+                .foregroundStyle(.white.opacity(0.72))
                 .lineSpacing(3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .playaPoster()
     }
 
     private var gallery: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Последние события")
-                .font(.system(size: 18, weight: .black))
-                .foregroundColor(.white)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Последние события").playaLabel()
+                Spacer()
+                Text("\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))")
+                    .playaLabel(color: .white.opacity(0.4))
+            }
+
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                 ForEach(DemoContent.events.prefix(4)) { event in
                     ZStack(alignment: .bottomLeading) {
                         RemoteImage(url: event.imageURL)
-                            .frame(height: 136)
+                            .frame(height: 156)
                             .clipped()
-                        LinearGradient(colors: [.clear, .black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
-                        Text(event.title)
-                            .font(.system(size: 13, weight: .black))
-                            .foregroundColor(.white)
-                            .lineLimit(2)
-                            .padding(10)
+                        LinearGradient(colors: [.clear, .black.opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                        VStack(alignment: .leading, spacing: 4) {
+                            if let date = event.dateText.split(separator: " ").first {
+                                Text(String(date).uppercased())
+                                    .playaLabel(color: PlayaStyle.bone.opacity(0.7))
+                            }
+                            Text(event.title)
+                                .font(.playaSans(13, weight: .bold))
+                                .foregroundStyle(.white)
+                                .lineLimit(2)
+                        }
+                        .padding(10)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: PlayaStyle.radiusCard, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PlayaStyle.radiusCard, style: .continuous)
+                            .stroke(PlayaStyle.hairline, lineWidth: 1)
+                    )
                 }
             }
         }
     }
 
-    private var accountControls: some View {
+    private var profileActions: some View {
         VStack(spacing: 10) {
-            HStack {
-                Label("\(appState.starBalance.formatted(.number.grouping(.automatic))) звёзд", systemImage: "star.fill")
-                    .foregroundColor(.yellow)
-                Spacer()
-                Button("Купить") { appState.starsStorePresented = true }
-                    .foregroundColor(Color("Hot"))
+            Button {
+                appState.starsStorePresented = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "star.fill")
+                    Text("Купить звёзды")
+                }
             }
-            .font(.system(size: 15, weight: .bold))
-            .padding(.bottom, 2)
-
-            if let email = auth.userEmail {
-                row("Email", email)
-                row("Вход", auth.isLocalAccount ? "Локальный аккаунт" : "Аккаунт")
-            } else {
-                row("Режим", auth.isGuest ? "Демо" : "Аккаунт")
-            }
+            .buttonStyle(PlayaPrimaryButton())
 
             Button {
-                Task { await auth.signOut() }
+                settingsPresented = true
             } label: {
-                Text("Выйти")
-                    .font(.system(size: 15, weight: .bold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 13)
-                    .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .foregroundColor(.white)
-            }
-
-            if !auth.isGuest {
-                Button(role: .destructive) {
-                    deleteStage = .firstConfirm
-                } label: {
-                    Text(deleteStage == .deleting ? "Удаление..." : "Удалить аккаунт")
-                        .font(.system(size: 15, weight: .bold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
+                HStack(spacing: 8) {
+                    Image(systemName: "gearshape.fill")
+                    Text("Настройки аккаунта")
                 }
-                .disabled(deleteStage == .deleting)
             }
+            .buttonStyle(PlayaGhostButton())
 
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundColor(.red)
+            VStack(spacing: 0) {
+                if let email = auth.userEmail {
+                    SettingsValueInline(title: "Email", value: email)
+                    Divider().background(PlayaStyle.hairline).padding(.vertical, 10)
+                }
+                SettingsValueInline(title: "Режим", value: auth.isLocalAccount ? "Локальный TestFlight" : "Supabase Auth")
             }
-
-            HStack(spacing: 14) {
-                Link("Privacy", destination: PlayaConfig.privacyURL)
-                Link("Terms", destination: PlayaConfig.termsURL)
-                Link("Support", destination: URL(string: "mailto:\(PlayaConfig.supportEmail)")!)
-            }
-            .font(.footnote)
-            .foregroundColor(.white.opacity(0.52))
-            .padding(.top, 4)
+            .padding(16)
+            .playaPoster()
         }
-        .padding(16)
-        .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private func stat(_ value: String, _ label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             Text(value)
-                .font(.system(size: 22, weight: .black))
-                .foregroundColor(.white)
-            Text(label)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.55))
+                .font(.playaDisplay(22, weight: .black))
+                .foregroundStyle(.white)
+                .tracking(-0.5)
+            Text(label).playaLabel(color: .white.opacity(0.5))
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .background(Color("Ink800"), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.vertical, 16)
     }
 
-    private func row(_ title: String, _ value: String) -> some View {
-        HStack {
-            Text(title).foregroundColor(.white.opacity(0.58))
-            Spacer()
-            Text(value).foregroundColor(.white)
-        }
-        .font(.system(size: 14, weight: .semibold))
-    }
-
-    private func runDelete() async {
-        deleteStage = .deleting
-        errorMessage = nil
-        do {
-            try await auth.deleteAccount()
-            await MainActor.run { deleteStage = .idle }
-        } catch {
-            await MainActor.run {
-                deleteStage = .idle
-                errorMessage = "Ошибка удаления: \(error.localizedDescription)"
+    private func highlight(title: String, value: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(color)
+                .frame(width: 38, height: 38)
+                .background(color.opacity(0.14), in: Circle())
+                .overlay(Circle().stroke(color.opacity(0.32), lineWidth: 1))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).playaLabel(color: .white.opacity(0.45))
+                Text(value)
+                    .font(.playaSans(16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
             }
+            Spacer()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .playaPoster()
+    }
+}
+
+private struct SettingsValueInline: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(title).playaLabel(color: .white.opacity(0.45))
+            Spacer()
+            Text(value)
+                .font(.playaSans(14, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
         }
     }
 }

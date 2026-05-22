@@ -1,31 +1,48 @@
 # Playa iOS
 
-Native SwiftUI app for Playa: events, tickets, posts, chats, and city recommendations.
+Native SwiftUI app for Playa: recommendation feed, events, tickets, stars, chats, profile, settings, and TestFlight demo content.
 
 ## Status
 
-- **Bundle ID:** `app.playahub`
-- **App Store name:** `Playa`
-- **Version:** 1.0.0 (build 5)
-- **Apple Team:** F8LA8PC4U6
-- **Stack:** Swift 5.9 + SwiftUI, iOS 16+, no external libraries
-- **Build:** GitHub Actions macOS runner -> TestFlight
+- Bundle ID: `app.playahub`
+- App Store name: `Playa`
+- Version: `1.0.0` build `6`
+- Apple Team: `F8LA8PC4U6`
+- Stack: Swift 5.9 + SwiftUI, iOS 16+, no external libraries
+- Build: GitHub Actions macOS runner -> TestFlight
 
-## Current TestFlight Demo
+## Build 6 Scope
 
-- `LoginScreen` - Apple Sign-In and Google entry with local account fallback while Supabase is unavailable, no guest preview.
-- `MainTabView` - Telegram-style bottom controls: 4 tabs plus a solo create button.
-- `FeedScreen` - recommendation feed with movies, banners, event cards, 100+ generated demo posts, working likes and event saves.
-- `EventsScreen` - demo events from Kazakhstani company-style accounts with ticket, chat, save actions, and star-only ticket payment.
-- `MatchesListView` - demo chats and company accounts.
-- `ProfileScreen` - editable user profile with hero, stats, bio, city, username, event gallery, and star balance.
-- `StarsStoreSheet` - Telegram-style star purchase screen with local demo balance top-up.
-- `DemoContent` - local demo data so TestFlight never opens empty.
+- Native SwiftUI `TabView`: Главная, События, Чаты, Профиль.
+- Center floating `+` creates a local TestFlight event and opens it in Events.
+- Login has Apple and Google entry points plus explicit local TestFlight fallback when Supabase is unavailable.
+- Backend diagnostics show whether Supabase auth endpoint is reachable.
+- Settings screen includes account edit, logout, delete account, language, subscription, stars, notifications, documents, support, app version, and database status.
+- Profile shows editable user data, subscription, stars, tickets, saved events, event gallery, and settings entry.
+- Feed has movies, banners, event recommendations, infinite demo posts, working likes, and event saves.
+- Events use star-only ticket payment and local saved state.
+- Stars store keeps the Telegram-style price layout and local TestFlight balance top-up.
+
+## Supabase
+
+The old Supabase URL `yteqnagkxbbaqjdgoqeu.supabase.co` is not reachable from DNS, so real registration cannot work until a live project is connected.
+
+Apply SQL in this order to the new production Supabase project:
+
+1. `supabase/003_playa_core_schema.sql`
+2. `supabase/002_content_reports.sql` if reports are not already included
+3. `supabase/001_delete_own_account.sql` only as a legacy fallback; `003_playa_core_schema.sql` already recreates `delete_own_account()`
+
+Then update `Playa/Services/PlayaConfig.swift` with the live Supabase URL and anon key, and configure Supabase Auth providers:
+
+- Apple provider for bundle `app.playahub`
+- Google OAuth provider
+- Redirect URL: `playa://auth-callback`
 
 ## Project Layout
 
 ```text
-playa-ios/
+ios/
   project.yml
   ExportOptions.plist
   .github/workflows/ios-build.yml
@@ -36,10 +53,6 @@ playa-ios/
     Models/
     Views/
     Assets.xcassets/
+  PlayaTests/
+  supabase/
 ```
-
-## Next
-
-- Persist create-event flow to Supabase.
-- Store profile edits, saved events, star balance, and ticket purchases in Supabase.
-- Add push notifications and real image uploads.

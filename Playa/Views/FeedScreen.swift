@@ -11,13 +11,13 @@ struct FeedScreen: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color("Ink900").ignoresSafeArea()
+                PlayaBackground()
 
                 ScrollView {
                     LazyVStack(spacing: 18) {
                         header
-                            .padding(.horizontal, 16)
-                            .padding(.top, 14)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
 
                         MovieRail(movies: DemoContent.movies)
 
@@ -55,8 +55,7 @@ struct FeedScreen: View {
                 }
                 .refreshable { reloadDemoFeed() }
             }
-            .navigationTitle("Playa")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task {
                 if posts.isEmpty {
@@ -64,7 +63,7 @@ struct FeedScreen: View {
                 }
             }
             .sheet(item: $selectedPost) { post in
-                PostCommentsSheet(post: post, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest)
+                PostCommentsSheet(post: post, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest || auth.isLocalAccount)
             }
             .sheet(item: $selectedEvent) { event in
                 NavigationStack {
@@ -75,25 +74,40 @@ struct FeedScreen: View {
     }
 
     private var header: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Сегодня в Алматы")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Color("Hot"))
-                Text("Фильмы, события и посты")
-                    .font(.system(size: 26, weight: .black))
-                    .foregroundColor(.white)
-                Text("Лента рекомендаций от казахстанских компаний и площадок.")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.58))
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Text("Лента")
+                Text("·")
+                Text("Алматы")
+                Spacer()
+                Text("Live")
             }
-            Spacer()
-            Image(systemName: "sparkles")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 46, height: 46)
-                .background(Color("Hot"), in: Circle())
+            .playaLabel()
+
+            // «Город *говорит*»
+            (
+                Text("Город ")
+                    .font(.playaDisplay(40, weight: .black))
+                    .foregroundStyle(.white)
+                +
+                Text("говорит")
+                    .font(.playaSerif(44))
+                    .italic()
+                    .foregroundStyle(PlayaStyle.hot)
+                +
+                Text(".")
+                    .font(.playaDisplay(40, weight: .black))
+                    .foregroundStyle(.white)
+            )
+            .tracking(-0.6)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+
+            Text("Фильмы, события и посты от площадок и людей в твоём городе.")
+                .playaBody()
+                .foregroundStyle(.white.opacity(0.62))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func reloadDemoFeed() {
@@ -324,12 +338,7 @@ private struct PostCard: View {
             .foregroundColor(.white.opacity(0.65))
         }
         .padding(14)
-        .background(Color("Ink800"))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
+        .playaPoster()
     }
 }
 
@@ -339,13 +348,11 @@ private struct SectionTitle: View {
 
     var body: some View {
         HStack(alignment: .lastTextBaseline) {
-            Text(title)
-                .font(.system(size: 18, weight: .black))
-                .foregroundColor(.white)
+            Text(title.uppercased())
+                .playaLabel(color: .white)
             Spacer()
             Text(subtitle)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.48))
+                .playaLabel(color: .white.opacity(0.45))
         }
     }
 }
@@ -387,72 +394,116 @@ struct EventDetailSheet: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                RemoteImage(url: event.imageURL)
-                    .frame(height: 240)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            VStack(alignment: .leading, spacing: 18) {
+                ZStack(alignment: .topLeading) {
+                    RemoteImage(url: event.imageURL)
+                        .frame(height: 260)
+                        .clipped()
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.55), .clear, .clear, Color.black.opacity(0.55)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: 260)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(event.category?.uppercased() ?? "EVENT")
-                        .font(.system(size: 12, weight: .black))
-                        .foregroundColor(Color("Hot"))
+                    HStack(spacing: 8) {
+                        Text(event.category?.uppercased() ?? "EVENT")
+                        Text("·")
+                        Text(event.dateText.uppercased())
+                    }
+                    .playaLabel()
+                    .padding(.horizontal, 14)
+                    .padding(.top, 16)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: PlayaStyle.radiusCard, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 12) {
                     Text(event.title)
-                        .font(.system(size: 30, weight: .black))
-                        .foregroundColor(.white)
+                        .font(.playaDisplay(32, weight: .black))
+                        .foregroundStyle(.white)
+                        .tracking(-0.5)
+                        .fixedSize(horizontal: false, vertical: true)
+
                     Text(event.description ?? "Событие Playa")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.72))
-                    Label("\(event.dateText) \(event.timeText) · \(event.location ?? "Алматы")", systemImage: "mappin.and.ellipse")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.72))
+                        .playaBody()
+                        .foregroundStyle(.white.opacity(0.72))
+
+                    metaGrid
+
                     HStack(spacing: 10) {
-                        Label("Баланс \(appState.starBalance.formatted(.number.grouping(.automatic)))", systemImage: "star.fill")
-                            .foregroundColor(.yellow)
+                        HStack(spacing: 6) {
+                            Image(systemName: "star.fill").foregroundStyle(PlayaStyle.lime)
+                            Text("Баланс \(appState.starBalance.formatted(.number.grouping(.automatic)))")
+                        }
+                        .playaLabel(color: .white.opacity(0.88))
                         Spacer()
                         Button("Купить звёзды") { starsStorePresented = true }
-                            .foregroundColor(Color("Hot"))
+                            .playaLabel(color: PlayaStyle.hot)
                     }
-                    .font(.system(size: 14, weight: .bold))
                 }
+                .padding(.horizontal, 4)
 
-                HStack(spacing: 10) {
+                VStack(spacing: 10) {
                     Button {
                         buyTicket()
                     } label: {
-                        Label(ticketButtonTitle, systemImage: hasTicket ? "checkmark.seal.fill" : "star.fill")
-                            .font(.system(size: 16, weight: .black))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 15)
-                            .background(hasTicket ? Color.green.opacity(0.85) : Color("Hot"), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .foregroundColor(.white)
+                        HStack(spacing: 8) {
+                            Image(systemName: hasTicket ? "checkmark.seal.fill" : "qrcode")
+                            Text(ticketButtonTitle)
+                        }
                     }
+                    .buttonStyle(PlayaPrimaryButton())
                     .disabled(hasTicket)
+                    .opacity(hasTicket ? 0.6 : 1)
 
                     Button {
                         appState.toggleSavedEvent(eventId: event.id)
                     } label: {
-                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                            .font(.system(size: 20, weight: .black))
-                            .frame(width: 58, height: 52)
-                            .background(Color.white.opacity(isSaved ? 0.18 : 0.1), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .foregroundColor(isSaved ? Color("Hot") : .white)
+                        HStack(spacing: 8) {
+                            Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            Text(isSaved ? "Сохранено" : "Сохранить")
+                        }
                     }
+                    .buttonStyle(PlayaGhostButton())
                 }
 
                 if let ticketMessage {
                     Text(ticketMessage)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.68))
+                        .playaCaption()
+                        .foregroundStyle(.white.opacity(0.7))
                 }
             }
             .padding(16)
         }
-        .background(Color("Ink900").ignoresSafeArea())
-        .navigationTitle("Мероприятие")
+        .background(PlayaBackground())
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $starsStorePresented) {
             StarsStoreSheet()
         }
+    }
+
+    private var metaGrid: some View {
+        HStack(spacing: 0) {
+            metaCell(label: "Дата", value: event.dateText)
+            Divider().background(PlayaStyle.hairline)
+            metaCell(label: "Время", value: event.timeText.isEmpty ? "—" : event.timeText)
+            Divider().background(PlayaStyle.hairline)
+            metaCell(label: "Город", value: event.location ?? "Алматы")
+        }
+        .frame(height: 64)
+        .playaPoster()
+    }
+
+    private func metaCell(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).playaLabel(color: .white.opacity(0.5))
+            Text(value)
+                .font(.playaSans(15, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 14)
     }
 
     private var ticketButtonTitle: String {

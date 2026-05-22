@@ -7,6 +7,9 @@ enum PlayaConfig {
     static let webAppURL = URL(string: "https://playahub.app")!
     static let privacyURL = URL(string: "https://playahub.app/privacy")!
     static let termsURL = URL(string: "https://playahub.app/terms")!
+    static let offerURL = URL(string: "https://playahub.app/offer")!
+    static let refundURL = URL(string: "https://playahub.app/refund")!
     static let supportEmail = "support@playahub.app"
     static let appVersion = "1.0.0"
+    static let appBuild = "6"
 }

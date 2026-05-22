@@ -1,105 +1,97 @@
 import SwiftUI
+import UIKit
 
 struct MainTabView: View {
     @EnvironmentObject private var appState: AppState
 
+    init() {
+        // Editorial dark tab bar — translucent ink with hairline top border.
+        let appearance = UITabBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        appearance.backgroundColor = UIColor(PlayaStyle.ink900).withAlphaComponent(0.55)
+        appearance.shadowColor = UIColor.white.withAlphaComponent(0.06)
+
+        let normal = UIColor.white.withAlphaComponent(0.40)
+        let selected = UIColor(PlayaStyle.hot)
+        let item = appearance.stackedLayoutAppearance
+        item.normal.iconColor = normal
+        item.normal.titleTextAttributes = [
+            .foregroundColor: normal,
+            .font: UIFont.systemFont(ofSize: 10, weight: .semibold)
+        ]
+        item.selected.iconColor = selected
+        item.selected.titleTextAttributes = [
+            .foregroundColor: selected,
+            .font: UIFont.systemFont(ofSize: 10, weight: .heavy)
+        ]
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            activeScreen
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            TabView(selection: $appState.selectedTab) {
+                FeedScreen()
+                    .tabItem { Label("Главная", systemImage: "house.fill") }
+                    .tag(AppState.Tab.feed)
 
-            bottomControls
-        }
-        .sheet(isPresented: $appState.createEventPresented) {
-            NavigationStack {
-                CreateEventSheet()
+                EventsScreen()
+                    .tabItem { Label("События", systemImage: "ticket.fill") }
+                    .tag(AppState.Tab.events)
+
+                MatchesListView()
+                    .tabItem { Label("Чаты", systemImage: "bubble.left.and.bubble.right.fill") }
+                    .tag(AppState.Tab.matches)
+
+                ProfileScreen()
+                    .tabItem { Label("Профиль", systemImage: "person.crop.circle.fill") }
+                    .tag(AppState.Tab.profile)
             }
-        }
-        .sheet(isPresented: $appState.starsStorePresented) {
-            StarsStoreSheet()
-        }
-    }
-
-    @ViewBuilder
-    private var activeScreen: some View {
-        switch appState.selectedTab {
-        case .feed:
-            FeedScreen()
-        case .events:
-            EventsScreen()
-        case .matches:
-            MatchesListView()
-        case .profile:
-            ProfileScreen()
-        }
-    }
-
-    private var bottomControls: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 2) {
-                TabBarButton(tab: .feed, title: "Главная", icon: "house.fill")
-                TabBarButton(tab: .events, title: "События", icon: "ticket.fill")
-                TabBarButton(tab: .matches, title: "Чаты", icon: "bubble.left.and.bubble.right.fill")
-                TabBarButton(tab: .profile, title: "Профиль", icon: "person.crop.circle.fill")
-            }
-            .padding(6)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay(Capsule().stroke(Color.white.opacity(0.08), lineWidth: 1))
-            .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
+            .tint(Color("Hot"))
 
             Button {
                 appState.createEventPresented = true
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 24, weight: .black))
-                    .foregroundColor(.white)
-                    .frame(width: 68, height: 68)
-                    .background(.ultraThinMaterial, in: Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.09), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
+                    .font(.system(size: 24, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .frame(width: 58, height: 58)
+                    .background(
+                        Circle()
+                            .fill(PlayaStyle.hot)
+                            .shadow(color: PlayaStyle.hot.opacity(0.46), radius: 22, x: 0, y: 10)
+                    )
+                    .overlay(
+                        Circle().stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.34),
+                                    Color.white.opacity(0.06)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1
+                        )
+                    )
             }
+            .accessibilityLabel("Создать мероприятие")
+            .padding(.bottom, 30)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 10)
-    }
-}
-
-private struct TabBarButton: View {
-    @EnvironmentObject private var appState: AppState
-    let tab: AppState.Tab
-    let title: String
-    let icon: String
-
-    private var isSelected: Bool {
-        appState.selectedTab == tab
-    }
-
-    var body: some View {
-        Button {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
-                appState.selectedTab = tab
-            }
-        } label: {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 22, weight: .bold))
-                Text(title)
-                    .font(.system(size: 11, weight: .bold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-            }
-            .foregroundColor(isSelected ? .white : .white.opacity(0.58))
-            .frame(maxWidth: .infinity)
-            .frame(height: 58)
-            .padding(.horizontal, 6)
-            .background(isSelected ? Color.white.opacity(0.14) : Color.clear, in: Capsule())
+        .sheet(isPresented: $appState.createEventPresented) {
+            NavigationStack { CreateEventSheet() }
         }
-        .buttonStyle(.plain)
+        .sheet(isPresented: $appState.starsStorePresented) {
+            StarsStoreSheet()
+        }
     }
 }
 
 private struct CreateEventSheet: View {
+    @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
+
     @State private var title = ""
     @State private var location = "Алматы"
     @State private var category = "Кино"
@@ -115,20 +107,23 @@ private struct CreateEventSheet: View {
                         Text(item).tag(item)
                     }
                 }
-                TextField("Цена, звёзды", text: $price)
+                TextField("Цена, звезды", text: $price)
                     .keyboardType(.numberPad)
             }
 
             Section {
                 Button {
+                    let stars = Int(price.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+                    appState.createLocalEvent(title: title, location: location, category: category, starPrice: stars)
+                    appState.selectedTab = .events
                     dismiss()
                 } label: {
-                    Label("Создать демо-событие", systemImage: "plus.circle.fill")
+                    Label("Создать мероприятие", systemImage: "plus.circle.fill")
                         .font(.system(size: 16, weight: .bold))
                 }
                 .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             } footer: {
-                Text("В TestFlight это демо-форма. Следующий шаг - сохранить событие в Supabase и показать его в рекомендациях.")
+                Text("В TestFlight мероприятие создается локально и сразу появляется во вкладке «События». После подключения живой базы форма будет сохранять событие в Supabase.")
             }
         }
         .navigationTitle("Создать событие")

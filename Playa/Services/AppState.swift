@@ -16,13 +16,20 @@ final class AppState: ObservableObject {
     @Published private(set) var savedEventIds: Set<String> = []
     @Published private(set) var purchasedTicketEventIds: Set<String> = []
     @Published private(set) var starBalance: Int = 0
+    @Published private(set) var createdEvents: [PlayaEvent] = []
 
     private let defaults: UserDefaults
+    private let likedPostsKey = "playa.posts.liked_ids"
+    private let savedEventsKey = "playa.events.saved_ids"
+    private let createdEventsKey = "playa.events.created"
     private let starBalanceKey = "playa.stars.balance"
     private let ticketsKey = "playa.tickets.purchased_event_ids"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        likedPostIds = Self.loadStringSet(defaults: defaults, key: likedPostsKey)
+        savedEventIds = Self.loadStringSet(defaults: defaults, key: savedEventsKey)
+        createdEvents = Self.loadEvents(defaults: defaults, key: createdEventsKey)
         starBalance = defaults.integer(forKey: starBalanceKey)
         purchasedTicketEventIds = Self.loadStringSet(defaults: defaults, key: ticketsKey)
     }
@@ -33,6 +40,7 @@ final class AppState: ObservableObject {
         } else {
             likedPostIds.insert(postId)
         }
+        Self.saveStringSet(likedPostIds, defaults: defaults, key: likedPostsKey)
     }
 
     func toggleSavedEvent(eventId: String) {
@@ -41,10 +49,31 @@ final class AppState: ObservableObject {
         } else {
             savedEventIds.insert(eventId)
         }
+        Self.saveStringSet(savedEventIds, defaults: defaults, key: savedEventsKey)
     }
 
     func isLiked(postId: String) -> Bool {
         likedPostIds.contains(postId)
+    }
+
+    func createLocalEvent(title: String, location: String, category: String, starPrice: Int) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else { return }
+        let calendar = Calendar.current
+        let tomorrow = Date().addingTimeInterval(86_400)
+        let startsAt = calendar.date(bySettingHour: 19, minute: 0, second: 0, of: tomorrow) ?? tomorrow
+        let event = PlayaEvent(
+            id: "local-event-\(UUID().uuidString)",
+            title: trimmedTitle,
+            description: "Создано в TestFlight. После подключения живой базы мероприятие будет сохраняться в Supabase.",
+            category: category,
+            location: location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Алматы" : location,
+            imageURL: nil,
+            startsAt: startsAt,
+            priceValue: max(0, starPrice) * 100
+        )
+        createdEvents.insert(event, at: 0)
+        Self.saveEvents(createdEvents, defaults: defaults, key: createdEventsKey)
     }
 
     func isEventSaved(eventId: String) -> Bool {
@@ -81,6 +110,20 @@ final class AppState: ObservableObject {
 
     private static func saveStringSet(_ set: Set<String>, defaults: UserDefaults, key: String) {
         guard let data = try? JSONEncoder().encode(Array(set).sorted()) else { return }
+        defaults.set(data, forKey: key)
+    }
+
+    private static func loadEvents(defaults: UserDefaults, key: String) -> [PlayaEvent] {
+        guard let data = defaults.data(forKey: key),
+              let values = try? JSONDecoder().decode([PlayaEvent].self, from: data)
+        else {
+            return []
+        }
+        return values
+    }
+
+    private static func saveEvents(_ events: [PlayaEvent], defaults: UserDefaults, key: String) {
+        guard let data = try? JSONEncoder().encode(events) else { return }
         defaults.set(data, forKey: key)
     }
 }

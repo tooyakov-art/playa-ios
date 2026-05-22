@@ -75,6 +75,14 @@ final class SupabaseClient {
     }
 
     func isAuthReachable() async -> Bool {
+        let status = await backendDiagnostic()
+        if case .online = status {
+            return true
+        }
+        return false
+    }
+
+    func backendDiagnostic() async -> BackendConnectionStatus {
         let url = baseURL.appendingPathComponent("auth/v1/settings")
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -84,10 +92,15 @@ final class SupabaseClient {
 
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse else { return false }
-            return (200..<500).contains(http.statusCode)
+            guard let http = response as? HTTPURLResponse else {
+                return .offline(message: "Supabase вернул не HTTP-ответ.")
+            }
+            if (200..<500).contains(http.statusCode) {
+                return .online(statusCode: http.statusCode)
+            }
+            return .offline(message: "Supabase отвечает ошибкой HTTP \(http.statusCode).")
         } catch {
-            return false
+            return .offline(message: "Не удалось подключиться к \(baseURL.host ?? "Supabase"): \(error.localizedDescription)")
         }
     }
 

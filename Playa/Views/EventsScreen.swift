@@ -2,29 +2,24 @@ import SwiftUI
 
 struct EventsScreen: View {
     @EnvironmentObject private var auth: Auth
+    @EnvironmentObject private var appState: AppState
     @State private var selectedEvent: PlayaEvent?
     @State private var chatEvent: PlayaEvent?
 
-    private let events = DemoContent.events
+    private var events: [PlayaEvent] {
+        appState.createdEvents + DemoContent.events
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color("Ink900").ignoresSafeArea()
+                PlayaBackground()
 
                 ScrollView {
-                    LazyVStack(spacing: 14) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Афиша")
-                                .font(.system(size: 30, weight: .black))
-                                .foregroundColor(.white)
-                            Text("Кино, концерты, бренды и городские встречи.")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.58))
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
+                    LazyVStack(spacing: 16) {
+                        EventsHeader()
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
 
                         ForEach(events) { event in
                             EventCard(
@@ -35,23 +30,62 @@ struct EventsScreen: View {
                             .padding(.horizontal, 16)
                         }
                     }
-                    .padding(.bottom, 96)
+                    .padding(.bottom, 110)
                 }
             }
-            .navigationTitle("События")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(item: $selectedEvent) { event in
                 NavigationStack { EventDetailSheet(event: event) }
             }
             .sheet(item: $chatEvent) { event in
                 NavigationStack {
-                    EventChatView(event: event, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest)
+                    EventChatView(event: event, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest || auth.isLocalAccount)
                 }
             }
         }
     }
 }
+
+// MARK: - Header
+
+private struct EventsHeader: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Text("Афиша")
+                Text("·")
+                Text("Алматы")
+                Spacer()
+                Text("00\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))")
+            }
+            .playaLabel()
+
+            // «Сегодня в *городе*»
+            (
+                Text("Сегодня\nв ")
+                    .font(.playaDisplay(40, weight: .black))
+                    .foregroundStyle(.white)
+                +
+                Text("городе")
+                    .font(.playaSerif(44))
+                    .italic()
+                    .foregroundStyle(PlayaStyle.hot)
+                +
+                Text(".")
+                    .font(.playaDisplay(40, weight: .black))
+                    .foregroundStyle(.white)
+            )
+            .tracking(-0.6)
+            .lineSpacing(-4)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Event card (poster style)
 
 struct EventCard: View {
     @EnvironmentObject private var appState: AppState
@@ -60,118 +94,129 @@ struct EventCard: View {
     let onOpen: () -> Void
     let onOpenChat: () -> Void
 
-    private var isSaved: Bool {
-        appState.isEventSaved(eventId: event.id)
-    }
+    private var isSaved: Bool { appState.isEventSaved(eventId: event.id) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Hero image with mono metadata strip
             Button(action: onOpen) {
-                ZStack(alignment: .topTrailing) {
+                ZStack(alignment: .topLeading) {
                     RemoteImage(url: event.imageURL)
-                        .frame(height: 188)
+                        .frame(height: 220)
                         .clipped()
 
-                    Text(event.priceText)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.black.opacity(0.58), in: Capsule())
-                        .padding(12)
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.55), .clear, .clear, Color.black.opacity(0.45)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                    .frame(height: 220)
+
+                    HStack(spacing: 8) {
+                        Text(event.dateText.uppercased())
+                        if !event.timeText.isEmpty {
+                            Text("·")
+                            Text(event.timeText)
+                        }
+                        if let location = event.location, !location.isEmpty {
+                            Text("·")
+                            Text(location.uppercased())
+                                .lineLimit(1)
+                        }
+                    }
+                    .playaLabel(color: .white.opacity(0.92))
+                    .padding(.horizontal, 14)
+                    .padding(.top, 14)
                 }
+                .overlay(
+                    HStack {
+                        Text(event.priceText.uppercased())
+                            .playaLabel(color: PlayaStyle.ink900)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule(style: .continuous).fill(PlayaStyle.bone)
+                            )
+                        Spacer()
+                        if let category = event.category {
+                            Text(category.uppercased())
+                                .playaLabel(color: .white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule(style: .continuous).fill(PlayaStyle.hot)
+                                )
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12),
+                    alignment: .bottom
+                )
             }
             .buttonStyle(.plain)
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    Text(event.dateText)
-                    if !event.timeText.isEmpty {
-                        Text("·").foregroundColor(.white.opacity(0.4))
-                        Text(event.timeText)
-                    }
-                    Spacer()
-                    Text((event.category ?? "EVENT").uppercased())
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundColor(Color("Hot"))
-                }
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.7))
-
+            // Title + description + CTA
+            VStack(alignment: .leading, spacing: 12) {
                 Text(event.title)
-                    .font(.system(size: 20, weight: .black))
-                    .foregroundColor(.white)
+                    .font(.playaDisplay(22, weight: .bold))
+                    .foregroundStyle(.white)
                     .lineLimit(2)
+                    .tracking(-0.3)
 
-                Text(event.description ?? "")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.62))
-                    .lineLimit(2)
-
-                if let location = event.location, !location.isEmpty {
-                    Label(location, systemImage: "mappin.and.ellipse")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.62))
+                if let description = event.description, !description.isEmpty {
+                    Text(description)
+                        .playaBody()
+                        .foregroundStyle(.white.opacity(0.68))
+                        .lineLimit(2)
                 }
 
                 HStack(spacing: 10) {
                     Button(action: onOpen) {
-                        Label("Билет", systemImage: "qrcode")
-                            .font(.system(size: 14, weight: .bold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 11)
-                            .background(Color("Hot"), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .foregroundColor(.white)
+                        HStack(spacing: 8) {
+                            Image(systemName: "qrcode")
+                            Text("Купить билет")
+                        }
                     }
+                    .buttonStyle(PlayaPrimaryButton())
 
                     Button(action: onOpenChat) {
                         Image(systemName: "bubble.left.and.bubble.right.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 48, height: 42)
-                            .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .foregroundColor(.white)
                     }
+                    .buttonStyle(PlayaIconButton(size: 52))
 
                     Button {
                         appState.toggleSavedEvent(eventId: event.id)
                     } label: {
                         Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 48, height: 42)
-                            .background(Color.white.opacity(isSaved ? 0.18 : 0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .foregroundColor(isSaved ? Color("Hot") : .white)
+                            .foregroundStyle(isSaved ? PlayaStyle.hot : .white)
                     }
+                    .buttonStyle(PlayaIconButton(size: 52))
                 }
-                .padding(.top, 6)
+                .padding(.top, 4)
             }
-            .padding(14)
+            .padding(16)
         }
-        .background(Color("Ink800"))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
+        .playaPoster()
     }
 }
+
+// MARK: - Empty state
 
 struct EmptyStateView: View {
     let title: String
     let message: String
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Image(systemName: "sparkles")
-                .font(.system(size: 40))
-                .foregroundColor(Color("Hot"))
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(PlayaStyle.hot)
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white)
+                .playaH3()
             Text(message)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.6))
+                .playaCaption()
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }
+        .padding(.vertical, 32)
     }
 }

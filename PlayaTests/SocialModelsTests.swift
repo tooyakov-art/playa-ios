@@ -88,4 +88,38 @@ final class SocialModelsTests: XCTestCase {
         XCTAssertTrue(state.hasTicket(eventId: event.id))
         XCTAssertEqual(state.starBalance, 100 - event.starPrice)
     }
+
+    @MainActor
+    func testCreateLocalEventUsesStarPriceAndDefaultLocation() {
+        let suiteName = "playa.tests.events.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let state = AppState(defaults: defaults)
+        state.createLocalEvent(title: "  Startup Night  ", location: "", category: "Business", starPrice: 75)
+
+        XCTAssertEqual(state.createdEvents.count, 1)
+        XCTAssertEqual(state.createdEvents[0].title, "Startup Night")
+        XCTAssertEqual(state.createdEvents[0].location, "Алматы")
+        XCTAssertEqual(state.createdEvents[0].starPrice, 75)
+
+        let restored = AppState(defaults: defaults)
+        XCTAssertEqual(restored.createdEvents.count, 1)
+        XCTAssertEqual(restored.createdEvents[0].title, "Startup Night")
+    }
+
+    @MainActor
+    func testLikesAndSavedEventsPersist() {
+        let suiteName = "playa.tests.actions.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let state = AppState(defaults: defaults)
+        state.toggleLike(postId: "post-1")
+        state.toggleSavedEvent(eventId: "event-1")
+
+        let restored = AppState(defaults: defaults)
+        XCTAssertTrue(restored.isLiked(postId: "post-1"))
+        XCTAssertTrue(restored.isEventSaved(eventId: "event-1"))
+    }
 }

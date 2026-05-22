@@ -9,94 +9,165 @@ struct MatchesListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color("Ink900").ignoresSafeArea()
+                PlayaBackground()
 
-                List {
-                    Section {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Демо-чаты")
-                                .font(.system(size: 28, weight: .black))
-                                .foregroundColor(.white)
-                            Text("Организаторы, компании и тестовые сообщения уже внутри.")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.58))
-                        }
-                        .listRowBackground(Color.clear)
-                    }
+                ScrollView {
+                    LazyVStack(spacing: 0, pinnedViews: []) {
+                        header
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
+                            .padding(.bottom, 14)
 
-                    Section("Диалоги") {
-                        ForEach(chats) { chat in
-                            Button {
-                                selectedChat = chat
-                            } label: {
-                                ChatPreviewRow(chat: chat)
-                            }
-                        }
-                    }
+                        sectionLabel("Диалоги")
+                            .padding(.horizontal, 20)
+                            .padding(.top, 8)
 
-                    Section("Аккаунты компаний") {
-                        ForEach(DemoContent.companies) { person in
-                            Button {
-                                selectedChat = ChatPreview(
-                                    id: "chat-\(person.id)",
-                                    otherUser: person,
-                                    lastMessage: "Здравствуйте! Это тестовый диалог Playa.",
-                                    lastMessageAt: Date()
-                                )
-                            } label: {
-                                HStack(spacing: 12) {
-                                    AvatarView(url: person.avatarURL, fallback: String(person.name.prefix(1)))
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        HStack(spacing: 5) {
-                                            Text(person.name)
-                                                .font(.system(size: 15, weight: .bold))
-                                            Image(systemName: "checkmark.seal.fill")
-                                                .font(.system(size: 11))
-                                                .foregroundColor(Color("Cyan"))
-                                        }
-                                        Text("@\(person.username ?? "playa")")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.secondary)
-                                    }
+                        VStack(spacing: 8) {
+                            ForEach(chats) { chat in
+                                Button { selectedChat = chat } label: {
+                                    ChatPreviewRow(chat: chat)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+
+                        sectionLabel("Бренды и компании")
+                            .padding(.horizontal, 20)
+                            .padding(.top, 24)
+
+                        VStack(spacing: 8) {
+                            ForEach(DemoContent.companies) { person in
+                                Button {
+                                    selectedChat = ChatPreview(
+                                        id: "chat-\(person.id)",
+                                        otherUser: person,
+                                        lastMessage: "Здравствуйте! Это тестовый диалог Playa.",
+                                        lastMessageAt: Date()
+                                    )
+                                } label: {
+                                    CompanyRow(person: person)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
                     }
+                    .padding(.bottom, 110)
                 }
-                .scrollContentBackground(.hidden)
-                .background(Color("Ink900"))
             }
-            .navigationTitle("Чаты")
+            .navigationBarHidden(true)
             .sheet(item: $selectedChat) { chat in
                 NavigationStack {
-                    ChatThreadView(chat: chat, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId ?? "guest", isGuest: auth.isGuest)
+                    ChatThreadView(
+                        chat: chat,
+                        service: SocialService(supabase: auth.supabase),
+                        currentUserId: auth.userId ?? "guest",
+                        isGuest: auth.isGuest || auth.isLocalAccount
+                    )
                 }
             }
         }
     }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Text("Чаты")
+                Text("·")
+                Text("\(chats.count + DemoContent.companies.count) активно")
+            }
+            .playaLabel()
+
+            (
+                Text("Город ")
+                    .font(.playaDisplay(40, weight: .black))
+                    .foregroundStyle(.white)
+                +
+                Text("на связи")
+                    .font(.playaSerif(44))
+                    .italic()
+                    .foregroundStyle(PlayaStyle.hot)
+                +
+                Text(".")
+                    .font(.playaDisplay(40, weight: .black))
+                    .foregroundStyle(.white)
+            )
+            .tracking(-0.6)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        HStack {
+            Text(text).playaLabel()
+            Spacer()
+        }
+    }
 }
+
+// MARK: - Rows
 
 private struct ChatPreviewRow: View {
     let chat: ChatPreview
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             AvatarView(url: chat.otherUser.avatarURL, fallback: String(chat.otherUser.name.prefix(1)))
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 5) {
+                .frame(width: 48, height: 48)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
                     Text(chat.otherUser.name)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.primary)
+                        .font(.playaSans(15, weight: .bold))
+                        .foregroundStyle(.white)
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 11))
-                        .foregroundColor(Color("Cyan"))
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(PlayaStyle.cyan)
                 }
                 Text(chat.subtitle)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                    .playaCaption()
                     .lineLimit(1)
             }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white.opacity(0.3))
         }
-        .padding(.vertical, 3)
+        .padding(14)
+        .playaPoster()
+    }
+}
+
+private struct CompanyRow: View {
+    let person: PlayaProfile
+
+    var body: some View {
+        HStack(spacing: 14) {
+            AvatarView(url: person.avatarURL, fallback: String(person.name.prefix(1)))
+                .frame(width: 48, height: 48)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(person.name)
+                        .font(.playaSans(15, weight: .bold))
+                        .foregroundStyle(.white)
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(PlayaStyle.cyan)
+                }
+                Text("@\(person.username ?? "playa")")
+                    .playaLabel(color: .white.opacity(0.5))
+            }
+            Spacer()
+            Image(systemName: "arrow.up.right")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white.opacity(0.3))
+        }
+        .padding(14)
+        .playaPoster()
     }
 }

@@ -36,18 +36,17 @@ final class Auth: ObservableObject {
             throw AuthError.invalidCredential
         }
 
-        do {
-            let session = try await supabase.signInWithApple(identityToken: identityToken)
-            store(session: session)
-        } catch {
-            storeLocalAccount(provider: "apple", userId: "apple-\(credential.user)", email: credential.email ?? "apple@playa.local")
+        guard await supabase.isAuthReachable() else {
+            throw AuthError.backendUnavailable
         }
+
+        let session = try await supabase.signInWithApple(identityToken: identityToken)
+        store(session: session)
     }
 
     func signInWithGoogle() async throws {
         guard await supabase.isAuthReachable() else {
-            storeLocalAccount(provider: "google", userId: "google-local", email: "google@playa.local")
-            return
+            throw AuthError.backendUnavailable
         }
 
         let callbackScheme = "playa"
@@ -67,6 +66,10 @@ final class Auth: ObservableObject {
             user: user
         )
         store(session: session)
+    }
+
+    func continueWithLocalAccount(provider: String) {
+        storeLocalAccount(provider: provider, userId: "\(provider)-local", email: "\(provider)@playa.local")
     }
 
     func signOut() async {
@@ -196,13 +199,16 @@ private final class WebAuthPresentationProvider: NSObject, ASWebAuthenticationPr
     }
 }
 
-enum AuthError: LocalizedError {
+enum AuthError: LocalizedError, Equatable {
     case invalidCredential
+    case backendUnavailable
 
     var errorDescription: String? {
         switch self {
         case .invalidCredential:
-            return "Apple did not return a valid identity token."
+            return "Apple не вернул корректный токен входа."
+        case .backendUnavailable:
+            return "База данных сейчас недоступна."
         }
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-struct PlayaEvent: Identifiable, Hashable, Decodable {
+struct PlayaEvent: Identifiable, Hashable, Codable {
     let id: String
     let title: String
     let description: String?
@@ -11,7 +11,7 @@ struct PlayaEvent: Identifiable, Hashable, Decodable {
     let priceValue: Int
 
     var priceText: String {
-        starPrice == 0 ? "Бесплатно" : "\(starPrice) звёзд"
+        starPrice == 0 ? "Бесплатно" : "\(starPrice) звезд"
     }
 
     var starPrice: Int {
