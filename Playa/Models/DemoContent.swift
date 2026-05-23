@@ -70,10 +70,10 @@ enum DemoContent {
     static func messages(for chatId: String) -> [ChatMessage] {
         let profile = demoChats.first(where: { $0.id == chatId })?.otherUser ?? companies[0]
         return [
-            ChatMessage(id: "\(chatId)-1", sender: .other, text: "Привет! Это демо-чат Playa. Здесь будет живая переписка с организатором.", createdAt: Date().addingTimeInterval(-3_600), senderName: profile.name, senderAvatarURL: profile.avatarURL),
+            ChatMessage(id: "\(chatId)-1", sender: .other, text: "Привет! Здесь будет переписка с организатором и быстрые ответы по событию.", createdAt: Date().addingTimeInterval(-3_600), senderName: profile.name, senderAvatarURL: profile.avatarURL),
             ChatMessage(id: "\(chatId)-2", sender: .user, text: "Отлично. Можно узнать детали события?", createdAt: Date().addingTimeInterval(-2_900), senderName: "Вы", senderAvatarURL: nil),
             ChatMessage(id: "\(chatId)-3", sender: .other, text: "Да. В ленте нажимаете на карточку события, покупаете билет и получаете QR.", createdAt: Date().addingTimeInterval(-2_200), senderName: profile.name, senderAvatarURL: profile.avatarURL),
-            ChatMessage(id: "\(chatId)-4", sender: .other, text: "Для TestFlight сделали демо-сообщения, чтобы экран не был пустым.", createdAt: Date().addingTimeInterval(-900), senderName: profile.name, senderAvatarURL: profile.avatarURL)
+            ChatMessage(id: "\(chatId)-4", sender: .other, text: "Сообщения сохраняются здесь, чтобы детали события всегда были под рукой.", createdAt: Date().addingTimeInterval(-900), senderName: profile.name, senderAvatarURL: profile.avatarURL)
         ]
     }
 
@@ -109,12 +109,12 @@ enum DemoContent {
         ]
         let details = [
             "\(event.title): \(event.description ?? "событие для города"). Лента подбирает это по вашим интересам.",
-            "Запустили демо-акцию для гостей Playa. Можно перейти из поста прямо в событие и забронировать место.",
+            "Запустили акцию для гостей Playa. Можно перейти из поста прямо в событие и забронировать место.",
             "Будет музыка, люди, QR-билеты и быстрый чат с организатором. Добавили это в рекомендации.",
             "Партнерский пост для афиши. Сохраняйте, если хотите увидеть больше похожих мероприятий.",
             "Собрали программу на вечер: фильм, встреча и afterparty. Playa покажет похожие события ниже.",
             "Новая точка на карте города. Внутри есть чат, билеты и детали по времени.",
-            "Демо-публикация от аккаунта компании. Так будет выглядеть промо в живой ленте.",
+            "Публикация от аккаунта компании. Так будет выглядеть промо в живой ленте.",
             "Коротко: \(event.location ?? "Алматы"), \(event.dateText), вход \(event.priceText.lowercased())."
         ]
         let imageIds = [

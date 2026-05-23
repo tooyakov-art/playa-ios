@@ -150,7 +150,7 @@ struct FeedScreen: View {
             _ = await loadedEvents
             if remotePosts.isEmpty {
                 reloadDemoFeed()
-                feedError = "Живая лента пока пустая, показываем стартовый контент."
+                feedError = "Лента пока пустая, показываем подборку для старта."
             } else {
                 posts = remotePosts
                 nextPostIndex = remotePosts.count
@@ -158,7 +158,7 @@ struct FeedScreen: View {
         } catch {
             _ = await loadedEvents
             reloadDemoFeed()
-            feedError = "База недоступна, показываем локальный контент."
+            feedError = "Связь с сервером нестабильна, показываем сохранённую подборку."
         }
     }
 
@@ -184,7 +184,7 @@ struct FeedScreen: View {
 
     private func report(_ post: PlayaPost) {
         guard let userId = auth.userId, !auth.isLocalAccount, !auth.isGuest else {
-            ToastCenter.shared.success("Жалоба сохранена локально")
+            ToastCenter.shared.success("Жалоба сохранена")
             return
         }
         Task {

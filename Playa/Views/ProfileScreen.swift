@@ -5,10 +5,10 @@ struct ProfileScreen: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var settings: SettingsStore
 
-    @AppStorage("playa.profile.name") private var profileName = "Адильхан Таргетолог"
-    @AppStorage("playa.profile.username") private var profileUsername = "adilkhan.playa"
+    @AppStorage("playa.profile.name") private var profileName = "Гость Playa"
+    @AppStorage("playa.profile.username") private var profileUsername = "playa.user"
     @AppStorage("playa.profile.city") private var profileCity = "Алматы"
-    @AppStorage("playa.profile.bio") private var profileBio = "Персональный профиль Playa: рекомендации, билеты, QR, чаты событий и посты от компаний."
+    @AppStorage("playa.profile.bio") private var profileBio = "Здесь будут рекомендации, билеты, QR, чаты событий и сохранённые места."
 
     @State private var isEditingProfile = false
     @State private var settingsPresented = false
@@ -112,9 +112,9 @@ struct ProfileScreen: View {
 
     private var stats: some View {
         HStack(spacing: 0) {
-            stat("24K", "Подписчиков")
+            stat("0", "Подписчиков")
             Divider().background(PlayaStyle.hairline).frame(height: 56)
-            stat("252", "Подписки")
+            stat("0", "Подписки")
             Divider().background(PlayaStyle.hairline).frame(height: 56)
             stat("\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))", "Событий")
         }
@@ -212,7 +212,7 @@ struct ProfileScreen: View {
                     SettingsValueInline(title: "Email", value: email)
                     Divider().background(PlayaStyle.hairline).padding(.vertical, 10)
                 }
-                SettingsValueInline(title: "Режим", value: auth.isLocalAccount ? "Локальный TestFlight" : "Supabase Auth")
+                SettingsValueInline(title: "Режим", value: auth.isLocalAccount ? "На этом устройстве" : "Аккаунт Playa")
             }
             .padding(16)
             .playaPoster()

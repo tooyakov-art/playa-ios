@@ -107,11 +107,11 @@ struct MatchesListView: View {
             let liveChats = try await SocialService(supabase: auth.supabase).loadDirectChats(currentUserId: userId)
             chats = liveChats.isEmpty ? DemoContent.demoChats : liveChats
             if liveChats.isEmpty {
-                chatError = "Диалогов пока нет, показываем стартовые контакты."
+                chatError = "Диалогов пока нет, показываем полезные контакты."
             }
         } catch {
             chats = DemoContent.demoChats
-            chatError = "База недоступна, показываем локальные диалоги."
+            chatError = "Связь с сервером нестабильна, показываем сохранённые диалоги."
         }
     }
 

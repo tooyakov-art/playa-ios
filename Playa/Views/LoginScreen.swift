@@ -33,24 +33,24 @@ struct LoginScreen: View {
             isPresented: $showAppleFallback,
             titleVisibility: .visible
         ) {
-            Button("Продолжить локальным Apple-аккаунтом") {
+            Button("Продолжить на этом устройстве") {
                 auth.continueWithLocalAccount(provider: "apple")
             }
             Button("Отмена", role: .cancel) {}
         } message: {
-            Text("Реальная регистрация через Apple требует живой Supabase базы и настроенного Apple provider. Для TestFlight можно войти локально.")
+            Text("Сейчас вход через Apple не завершился. Можно продолжить и посмотреть приложение без синхронизации.")
         }
         .confirmationDialog(
             "База данных недоступна",
             isPresented: $showGoogleFallback,
             titleVisibility: .visible
         ) {
-            Button("Продолжить локальным Google-аккаунтом") {
+            Button("Продолжить на этом устройстве") {
                 auth.continueWithLocalAccount(provider: "google")
             }
             Button("Отмена", role: .cancel) {}
         } message: {
-            Text("Настоящий Google OAuth требует живой Supabase базы. Сейчас текущий проект Supabase не отвечает.")
+            Text("Сейчас вход через Google недоступен. Можно продолжить и посмотреть приложение без синхронизации.")
         }
         .sheet(isPresented: $showDiagnostics) {
             NavigationStack {

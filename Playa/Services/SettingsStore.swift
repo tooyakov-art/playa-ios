@@ -43,7 +43,7 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .free:
-            return "Лента, события, чаты и демо-билеты."
+            return "Лента, события, чаты и билеты."
         case .plus:
             return "Больше рекомендаций, избранное и быстрые билеты."
         case .organizer:
@@ -76,18 +76,18 @@ enum BackendConnectionStatus: Equatable {
         case .unchecked: return "Не проверено"
         case .checking: return "Проверяем"
         case .online: return "База доступна"
-        case .offline: return "База недоступна"
+        case .offline: return "Сервер недоступен"
         }
     }
 
     var detail: String {
         switch self {
         case .unchecked:
-            return "Нажмите проверку, чтобы увидеть текущий статус Supabase."
+            return "Нажмите проверку, чтобы увидеть текущий статус сервера."
         case .checking:
             return "Проверяем auth endpoint."
         case .online(let statusCode):
-            return "Supabase отвечает. HTTP \(statusCode)."
+            return "Сервер отвечает. HTTP \(statusCode)."
         case .offline(let message):
             return message
         }

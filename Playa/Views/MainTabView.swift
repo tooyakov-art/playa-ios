@@ -136,7 +136,7 @@ private struct CreateEventSheet: View {
                     .opacity(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.55 : 1)
                     .padding(.top, 6)
 
-                    Text("Событие создаётся локально и сразу попадает на вкладку «События». После подключения живой базы форма будет сохранять событие в Supabase.")
+                    Text("Событие сохранится как черновик и сразу появится во вкладке «События».")
                         .playaCaption()
                         .foregroundColor(.white.opacity(0.55))
                         .padding(.top, 4)
@@ -178,11 +178,11 @@ private struct CreateEventSheet: View {
             .playaLabel()
 
             (
-                Text("Город ")
-                    .font(.playaDisplay(32, weight: .black))
-                    .foregroundColor(.white)
+                            Text("Черновик ")
+                                .font(.playaDisplay(32, weight: .black))
+                                .foregroundColor(.white)
                 +
-                Text("придёт")
+                Text("события")
                     .font(.playaSerif(36))
                     .italic()
                     .foregroundColor(PlayaStyle.hot)

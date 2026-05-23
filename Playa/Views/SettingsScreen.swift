@@ -8,10 +8,10 @@ struct SettingsScreen: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
-    @AppStorage("playa.profile.name") private var profileName = "Адильхан Таргетолог"
-    @AppStorage("playa.profile.username") private var profileUsername = "adilkhan.playa"
+    @AppStorage("playa.profile.name") private var profileName = "Гость Playa"
+    @AppStorage("playa.profile.username") private var profileUsername = "playa.user"
     @AppStorage("playa.profile.city") private var profileCity = "Алматы"
-    @AppStorage("playa.profile.bio") private var profileBio = "Персональный профиль Playa."
+    @AppStorage("playa.profile.bio") private var profileBio = "Здесь будут рекомендации, билеты, QR, чаты событий и сохранённые места."
 
     @State private var deleteStage: DeleteStage = .idle
     @State private var accountError: String?
@@ -83,7 +83,7 @@ struct SettingsScreen: View {
                 .lineLimit(3...6)
 
             SettingsValueRow(title: "Email", value: auth.userEmail ?? "Не указан")
-            SettingsValueRow(title: "Вход", value: auth.isLocalAccount ? "Локальный TestFlight" : "Supabase Auth")
+            SettingsValueRow(title: "Вход", value: auth.isLocalAccount ? "На этом устройстве" : "Аккаунт Playa")
 
             Button {
                 Task { await auth.signOut() }
@@ -118,7 +118,7 @@ struct SettingsScreen: View {
         } header: {
             Text("Язык")
         } footer: {
-            Text("Сейчас переключатель сохраняет выбранный язык. Полная локализация всех старых экранов пойдет отдельным проходом.")
+            Text("Выбранный язык сохранится для следующих экранов приложения.")
         }
         .listRowBackground(Color("Ink800"))
     }
@@ -152,7 +152,7 @@ struct SettingsScreen: View {
         } header: {
             Text("Подписка")
         } footer: {
-            Text("В TestFlight это статус подписки. Реальная оплата подключается через StoreKit после создания продуктов в App Store Connect.")
+            Text("Тариф сохранится в профиле. Оплата станет доступна после подключения продуктов в App Store.")
         }
         .listRowBackground(Color("Ink800"))
     }
@@ -173,7 +173,7 @@ struct SettingsScreen: View {
                 Label("Купить звезды", systemImage: "sparkles")
             }
 
-            SettingsValueRow(title: "История", value: "TestFlight demo")
+            SettingsValueRow(title: "История", value: "Покупки на этом устройстве")
             SettingsValueRow(title: "Оплата билетов", value: "Только звездами")
         }
         .listRowBackground(Color("Ink800"))
@@ -227,7 +227,7 @@ struct SettingsScreen: View {
 
             SettingsValueRow(title: "Версия", value: "\(PlayaConfig.appVersion) (\(PlayaConfig.appBuild))")
             SettingsValueRow(title: "Bundle", value: "app.playahub")
-            SettingsValueRow(title: "Supabase", value: PlayaConfig.supabaseURL.host ?? "не задан")
+            SettingsValueRow(title: "Сервер", value: PlayaConfig.supabaseURL.host ?? "не задан")
         }
         .listRowBackground(Color("Ink800"))
     }

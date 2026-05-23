@@ -80,7 +80,7 @@ struct EventsScreen: View {
         if !service.events.isEmpty {
             liveEvents = service.events
         } else if let error = service.lastError {
-            eventsError = "База недоступна, показываем локальную афишу."
+            eventsError = "Связь с сервером нестабильна, показываем сохранённую афишу."
             if !error.isEmpty {
                 settingsDebugLog(error)
             }
