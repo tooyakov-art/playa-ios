@@ -11,7 +11,7 @@ final class SocialService {
         let data = try await supabase.restGetAnon(
             path: "posts",
             query: [
-                URLQueryItem(name: "select", value: "id,author_id,text,image_url,likes_count,comments_count,event_id,created_at"),
+                URLQueryItem(name: "select", value: "id,author_id,text,image_url,likes_count,comments_count,event_id,created_at,profiles(id,name,username,avatar_url)"),
                 URLQueryItem(name: "order", value: "created_at.desc"),
                 URLQueryItem(name: "limit", value: "50")
             ]
@@ -39,7 +39,7 @@ final class SocialService {
         let data = try await supabase.restGetAnon(
             path: "post_comments",
             query: [
-                URLQueryItem(name: "select", value: "id,post_id,author_id,text,created_at"),
+                URLQueryItem(name: "select", value: "id,post_id,author_id,text,created_at,profiles(id,name,username,avatar_url)"),
                 URLQueryItem(name: "post_id", value: "eq.\(postId)"),
                 URLQueryItem(name: "order", value: "created_at.asc")
             ]
@@ -150,7 +150,7 @@ final class SocialService {
         let data = try await supabase.restGet(
             path: "messages",
             query: [
-                URLQueryItem(name: "select", value: "id,text,created_at,sender_id"),
+                URLQueryItem(name: "select", value: "id,text,created_at,sender_id,profiles(id,name,username,avatar_url)"),
                 URLQueryItem(name: "chat_id", value: "eq.\(chatId)"),
                 URLQueryItem(name: "order", value: "created_at.asc"),
                 URLQueryItem(name: "limit", value: "200")
@@ -186,7 +186,7 @@ final class SocialService {
         let data = try await supabase.restGet(
             path: "event_messages",
             query: [
-                URLQueryItem(name: "select", value: "id,text,created_at,sender_id"),
+                URLQueryItem(name: "select", value: "id,text,created_at,sender_id,profiles(id,name,username,avatar_url)"),
                 URLQueryItem(name: "event_id", value: "eq.\(eventId)"),
                 URLQueryItem(name: "order", value: "created_at.asc"),
                 URLQueryItem(name: "limit", value: "200")

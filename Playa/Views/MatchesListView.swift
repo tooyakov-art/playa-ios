@@ -5,6 +5,8 @@ struct MatchesListView: View {
 
     @State private var chats: [ChatPreview] = DemoContent.demoChats
     @State private var selectedChat: ChatPreview?
+    @State private var isLoading = false
+    @State private var chatError: String?
 
     var body: some View {
         NavigationStack {
@@ -21,6 +23,21 @@ struct MatchesListView: View {
                         sectionLabel("Диалоги")
                             .padding(.horizontal, 20)
                             .padding(.top, 8)
+
+                        if isLoading {
+                            ProgressView()
+                                .tint(PlayaStyle.hot)
+                                .padding(.vertical, 14)
+                        }
+
+                        if let chatError {
+                            Text(chatError)
+                                .playaCaption()
+                                .foregroundColor(.white.opacity(0.55))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 6)
+                        }
 
                         VStack(spacing: 8) {
                             ForEach(chats) { chat in
@@ -57,8 +74,12 @@ struct MatchesListView: View {
                     }
                     .padding(.bottom, 110)
                 }
+                .refreshable { await reloadChats() }
             }
             .navigationBarHidden(true)
+            .task {
+                await reloadChats()
+            }
             .sheet(item: $selectedChat) { chat in
                 NavigationStack {
                     ChatThreadView(
@@ -69,6 +90,28 @@ struct MatchesListView: View {
                     )
                 }
             }
+        }
+    }
+
+    private func reloadChats() async {
+        guard let userId = auth.userId, !auth.isLocalAccount, !auth.isGuest else {
+            chats = DemoContent.demoChats
+            return
+        }
+
+        isLoading = true
+        chatError = nil
+        defer { isLoading = false }
+
+        do {
+            let liveChats = try await SocialService(supabase: auth.supabase).loadDirectChats(currentUserId: userId)
+            chats = liveChats.isEmpty ? DemoContent.demoChats : liveChats
+            if liveChats.isEmpty {
+                chatError = "Диалогов пока нет, показываем стартовые контакты."
+            }
+        } catch {
+            chats = DemoContent.demoChats
+            chatError = "База недоступна, показываем локальные диалоги."
         }
     }
 

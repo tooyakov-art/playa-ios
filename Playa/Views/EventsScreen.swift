@@ -5,9 +5,12 @@ struct EventsScreen: View {
     @EnvironmentObject private var appState: AppState
     @State private var selectedEvent: PlayaEvent?
     @State private var chatEvent: PlayaEvent?
+    @State private var liveEvents: [PlayaEvent] = []
+    @State private var isLoading = false
+    @State private var eventsError: String?
 
     private var events: [PlayaEvent] {
-        appState.createdEvents + DemoContent.events
+        appState.createdEvents + (liveEvents.isEmpty ? DemoContent.events : liveEvents)
     }
 
     var body: some View {
@@ -17,9 +20,23 @@ struct EventsScreen: View {
 
                 ScrollView {
                     LazyVStack(spacing: 16) {
-                        EventsHeader()
+                        EventsHeader(count: events.count, isLive: !liveEvents.isEmpty)
                             .padding(.horizontal, 20)
                             .padding(.top, 12)
+
+                        if isLoading && liveEvents.isEmpty {
+                            ProgressView()
+                                .tint(PlayaStyle.hot)
+                                .padding(.vertical, 10)
+                        }
+
+                        if let eventsError {
+                            Text(eventsError)
+                                .playaCaption()
+                                .foregroundColor(.white.opacity(0.55))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                        }
 
                         ForEach(events) { event in
                             EventCard(
@@ -32,9 +49,15 @@ struct EventsScreen: View {
                     }
                     .padding(.bottom, 110)
                 }
+                .refreshable { await reloadEvents() }
             }
             .navigationBarHidden(true)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .task {
+                if liveEvents.isEmpty {
+                    await reloadEvents()
+                }
+            }
             .sheet(item: $selectedEvent) { event in
                 NavigationStack { EventDetailSheet(event: event) }
             }
@@ -45,19 +68,46 @@ struct EventsScreen: View {
             }
         }
     }
+
+    private func reloadEvents() async {
+        guard !auth.isLocalAccount, !auth.isGuest else { return }
+        isLoading = true
+        eventsError = nil
+        defer { isLoading = false }
+
+        let service = EventsService(supabase: auth.supabase)
+        await service.reload()
+        if !service.events.isEmpty {
+            liveEvents = service.events
+        } else if let error = service.lastError {
+            eventsError = "База недоступна, показываем локальную афишу."
+            if !error.isEmpty {
+                settingsDebugLog(error)
+            }
+        }
+    }
+
+    private func settingsDebugLog(_ message: String) {
+        #if DEBUG
+        print("Events reload failed: \(message)")
+        #endif
+    }
 }
 
 // MARK: - Header
 
 private struct EventsHeader: View {
+    let count: Int
+    let isLive: Bool
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Text("Афиша")
                 Text("·")
-                Text("Алматы")
+                Text(isLive ? "Live" : "Алматы")
                 Spacer()
-                Text("00\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))")
+                Text(count.formatted(.number.precision(.integerLength(2))))
             }
             .playaLabel()
 

@@ -2,11 +2,19 @@
 
 struct FeedScreen: View {
     @EnvironmentObject private var auth: Auth
+    @EnvironmentObject private var appState: AppState
 
     @State private var posts: [PlayaPost] = []
+    @State private var liveEvents: [PlayaEvent] = []
     @State private var nextPostIndex = 0
     @State private var selectedPost: PlayaPost?
     @State private var selectedEvent: PlayaEvent?
+    @State private var isLoading = false
+    @State private var feedError: String?
+
+    private var eventCatalog: [PlayaEvent] {
+        appState.createdEvents + (liveEvents.isEmpty ? DemoContent.events : liveEvents)
+    }
 
     var body: some View {
         NavigationStack {
@@ -22,23 +30,37 @@ struct FeedScreen: View {
                         MovieRail(movies: DemoContent.movies)
 
                         BannerRail(banners: DemoContent.banners) { banner in
-                            if let event = DemoContent.events.first(where: { $0.id == banner.eventId }) {
+                            if let event = eventCatalog.first(where: { $0.id == banner.eventId }) {
                                 selectedEvent = event
                             }
                         }
 
-                        EventRail(events: Array(DemoContent.events.prefix(6))) { event in
+                        EventRail(events: Array(eventCatalog.prefix(6))) { event in
                             selectedEvent = event
+                        }
+
+                        if isLoading && posts.isEmpty {
+                            ProgressView()
+                                .tint(PlayaStyle.hot)
+                                .padding(.vertical, 24)
+                        }
+
+                        if let feedError {
+                            Text(feedError)
+                                .playaCaption()
+                                .foregroundColor(.white.opacity(0.55))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
                         }
 
                         ForEach(posts) { post in
                             PostCard(
                                 post: post,
                                 onComments: { selectedPost = post },
-                                onReport: {},
+                                onReport: { report(post) },
                                 onOpenEvent: {
                                     if let eventId = post.eventId,
-                                       let event = DemoContent.events.first(where: { $0.id == eventId }) {
+                                       let event = eventCatalog.first(where: { $0.id == eventId }) {
                                         selectedEvent = event
                                     }
                                 }
@@ -53,13 +75,13 @@ struct FeedScreen: View {
                     }
                     .padding(.bottom, 96)
                 }
-                .refreshable { reloadDemoFeed() }
+                .refreshable { await reloadFeed(forceDemo: false) }
             }
             .navigationBarHidden(true)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task {
                 if posts.isEmpty {
-                    reloadDemoFeed()
+                    await reloadFeed(forceDemo: false)
                 }
             }
             .sheet(item: $selectedPost) { post in
@@ -110,6 +132,44 @@ struct FeedScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private func reloadFeed(forceDemo: Bool) async {
+        if forceDemo || auth.isLocalAccount || auth.isGuest {
+            reloadDemoFeed()
+            return
+        }
+
+        isLoading = true
+        feedError = nil
+        defer { isLoading = false }
+
+        async let loadedPosts = SocialService(supabase: auth.supabase).loadPosts()
+        async let loadedEvents: Void = loadLiveEvents()
+
+        do {
+            let remotePosts = try await loadedPosts
+            _ = await loadedEvents
+            if remotePosts.isEmpty {
+                reloadDemoFeed()
+                feedError = "Живая лента пока пустая, показываем стартовый контент."
+            } else {
+                posts = remotePosts
+                nextPostIndex = remotePosts.count
+            }
+        } catch {
+            _ = await loadedEvents
+            reloadDemoFeed()
+            feedError = "База недоступна, показываем локальный контент."
+        }
+    }
+
+    private func loadLiveEvents() async {
+        let service = EventsService(supabase: auth.supabase)
+        await service.reload()
+        if !service.events.isEmpty {
+            liveEvents = service.events
+        }
+    }
+
     private func reloadDemoFeed() {
         posts = DemoContent.recommendedPosts(count: 30)
         nextPostIndex = posts.count
@@ -120,6 +180,17 @@ struct FeedScreen: View {
         let newPosts = (nextPostIndex..<(nextPostIndex + 12)).map(DemoContent.recommendedPost(index:))
         posts.append(contentsOf: newPosts)
         nextPostIndex += newPosts.count
+    }
+
+    private func report(_ post: PlayaPost) {
+        guard let userId = auth.userId, !auth.isLocalAccount, !auth.isGuest else {
+            ToastCenter.shared.success("Жалоба сохранена локально")
+            return
+        }
+        Task {
+            await SocialService(supabase: auth.supabase).reportContent(reporterId: userId, kind: "post", targetId: post.id)
+            ToastCenter.shared.success("Жалоба отправлена")
+        }
     }
 }
 

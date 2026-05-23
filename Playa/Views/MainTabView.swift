@@ -136,7 +136,7 @@ private struct CreateEventSheet: View {
                     .opacity(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.55 : 1)
                     .padding(.top, 6)
 
-                    Text("В TestFlight событие создаётся локально и сразу попадает на вкладку «События». После подключения живой базы форма будет сохранять событие в Supabase.")
+                    Text("Событие создаётся локально и сразу попадает на вкладку «События». После подключения живой базы форма будет сохранять событие в Supabase.")
                         .playaCaption()
                         .foregroundColor(.white.opacity(0.55))
                         .padding(.top, 4)
@@ -173,7 +173,7 @@ private struct CreateEventSheet: View {
             HStack(spacing: 8) {
                 Text("Создать")
                 Text("·")
-                Text("TestFlight demo")
+                Text("Алматы")
             }
             .playaLabel()
 

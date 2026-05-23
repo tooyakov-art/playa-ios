@@ -65,7 +65,7 @@ final class AppState: ObservableObject {
         let event = PlayaEvent(
             id: "local-event-\(UUID().uuidString)",
             title: trimmedTitle,
-            description: "Создано в TestFlight. После подключения живой базы мероприятие будет сохраняться в Supabase.",
+            description: "Создано локально на этом устройстве. После подключения живой базы мероприятие можно будет сохранять в Supabase.",
             category: category,
             location: location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Алматы" : location,
             imageURL: nil,
