@@ -11,5 +11,5 @@ enum PlayaConfig {
     static let refundURL = URL(string: "https://playahub.app/refund")!
     static let supportEmail = "support@playahub.app"
     static let appVersion = "1.0.0"
-    static let appBuild = "10"
+    static let appBuild = "11"
 }

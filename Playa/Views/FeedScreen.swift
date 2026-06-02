@@ -11,9 +11,17 @@ struct FeedScreen: View {
     @State private var selectedEvent: PlayaEvent?
     @State private var isLoading = false
     @State private var feedError: String?
+    @State private var selectedCategory: String?
+    @State private var categoriesExpanded = false
 
     private var eventCatalog: [PlayaEvent] {
         appState.createdEvents + (liveEvents.isEmpty ? DemoContent.events : liveEvents)
+    }
+
+    private var categoryEvents: [PlayaEvent] {
+        guard let selectedCategory else { return eventCatalog }
+        let exact = eventCatalog.filter { ($0.category ?? "").localizedCaseInsensitiveContains(selectedCategory) }
+        return exact.isEmpty ? eventCatalog : exact
     }
 
     var body: some View {
@@ -27,6 +35,12 @@ struct FeedScreen: View {
                             .padding(.horizontal, 20)
                             .padding(.top, 16)
 
+                        FeedCategoryBar(
+                            selectedCategory: $selectedCategory,
+                            isExpanded: $categoriesExpanded
+                        )
+                        .padding(.top, -2)
+
                         MovieRail(movies: DemoContent.movies)
 
                         BannerRail(banners: DemoContent.banners) { banner in
@@ -35,7 +49,7 @@ struct FeedScreen: View {
                             }
                         }
 
-                        EventRail(events: Array(eventCatalog.prefix(6))) { event in
+                        EventRail(events: Array(categoryEvents.prefix(6))) { event in
                             selectedEvent = event
                         }
 
@@ -191,6 +205,171 @@ struct FeedScreen: View {
             await SocialService(supabase: auth.supabase).reportContent(reporterId: userId, kind: "post", targetId: post.id)
             ToastCenter.shared.success("Жалоба отправлена")
         }
+    }
+}
+
+private struct FeedCategory: Identifiable, Hashable {
+    let title: String
+    let icon: String
+    let tint: Color
+
+    var id: String { title }
+
+    static let all: [FeedCategory] = [
+        FeedCategory(title: "Кино", icon: "film.fill", tint: PlayaStyle.cyan),
+        FeedCategory(title: "Музыка", icon: "music.note", tint: PlayaStyle.hot),
+        FeedCategory(title: "Концерт", icon: "sparkles", tint: PlayaStyle.lime),
+        FeedCategory(title: "Фестиваль", icon: "party.popper.fill", tint: PlayaStyle.ember),
+        FeedCategory(title: "Еда", icon: "fork.knife", tint: PlayaStyle.bone),
+        FeedCategory(title: "Gaming", icon: "gamecontroller.fill", tint: PlayaStyle.violet),
+        FeedCategory(title: "Business", icon: "briefcase.fill", tint: PlayaStyle.cyan),
+        FeedCategory(title: "Travel", icon: "airplane", tint: PlayaStyle.lime)
+    ]
+}
+
+private struct FeedCategoryBar: View {
+    @Binding var selectedCategory: String?
+    @Binding var isExpanded: Bool
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
+    ]
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        categoryButton(title: "Все", icon: "square.grid.2x2.fill", tint: PlayaStyle.hot, isSelected: selectedCategory == nil) {
+                            selectedCategory = nil
+                        }
+
+                        ForEach(FeedCategory.all) { category in
+                            categoryButton(
+                                title: category.title,
+                                icon: category.icon,
+                                tint: category.tint,
+                                isSelected: selectedCategory == category.title
+                            ) {
+                                toggle(category.title)
+                            }
+                        }
+                    }
+                    .padding(.leading, 16)
+                    .padding(.vertical, 2)
+                }
+
+                Button {
+                    PlayaFeedback.selection()
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                        isExpanded.toggle()
+                    }
+                } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 17, weight: .heavy))
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                }
+                .buttonStyle(PlayaIconButton(size: 42))
+                .padding(.trailing, 16)
+            }
+
+            if isExpanded {
+                LazyVGrid(columns: columns, spacing: 8) {
+                    categoryTile(title: "Все", icon: "square.grid.2x2.fill", tint: PlayaStyle.hot, isSelected: selectedCategory == nil) {
+                        selectedCategory = nil
+                    }
+
+                    ForEach(FeedCategory.all) { category in
+                        categoryTile(
+                            title: category.title,
+                            icon: category.icon,
+                            tint: category.tint,
+                            isSelected: selectedCategory == category.title
+                        ) {
+                            toggle(category.title)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private func categoryButton(
+        title: String,
+        icon: String,
+        tint: Color,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            PlayaFeedback.selection()
+            action()
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .bold))
+                Text(title)
+                    .lineLimit(1)
+            }
+            .font(.playaMono(11, weight: .bold))
+            .textCase(.uppercase)
+            .tracking(1.1)
+            .foregroundColor(isSelected ? PlayaStyle.ink900 : .white)
+            .padding(.horizontal, 12)
+            .frame(height: 36)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(isSelected ? tint : Color.white.opacity(0.08))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(isSelected ? Color.white.opacity(0.24) : Color.white.opacity(0.12), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggle(_ title: String) {
+        selectedCategory = selectedCategory == title ? nil : title
+    }
+
+    private func categoryTile(
+        title: String,
+        icon: String,
+        tint: Color,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            PlayaFeedback.selection()
+            action()
+        } label: {
+            VStack(spacing: 7) {
+                Image(systemName: icon)
+                    .font(.system(size: 17, weight: .bold))
+                Text(title)
+                    .font(.playaMono(10, weight: .bold))
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .foregroundColor(isSelected ? PlayaStyle.ink900 : .white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 70)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isSelected ? tint : Color.white.opacity(0.07))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.white.opacity(isSelected ? 0.22 : 0.10), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
