@@ -1,6 +1,6 @@
-# Playa Backend Checklist for Build 15
+# Playa Backend Checklist for Build 16
 
-Before submitting build `1.0.0 (15)` to App Store review, the production backend must be live.
+Before submitting build `1.0.0 (16)` to App Store review, the production backend must be live.
 
 ## Supabase
 
@@ -25,7 +25,7 @@ Before submitting build `1.0.0 (15)` to App Store review, the production backend
 
 ## App Store Connect
 
-- Select TestFlight build `1.0.0 (15)` after processing completes.
+- Select TestFlight build `1.0.0 (16)` after processing completes.
 - Fill App Privacy answers from `APP_STORE_PRIVACY_ANSWERS.md`.
 - Use review notes from `APP_STORE_SUBMISSION.md`.
-- Upload iPhone screenshots only; build 15 is iPhone-only.
+- Upload iPhone screenshots only; build 16 is iPhone-only.
