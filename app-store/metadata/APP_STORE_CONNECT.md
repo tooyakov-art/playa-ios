@@ -71,3 +71,11 @@ https://github.com/tooyakov-art/playa-ios/blob/main/PRIVACY.md
 - Name: owner must fill in App Store Connect
 - Phone: owner must fill in App Store Connect
 - Email: support@playahub.app
+
+## Screenshots
+
+Upload iPhone-only 6.9-inch screenshots from `app-store/screenshots/iphone-6-9/`.
+
+## Review notes
+
+Use `Продолжить без входа` on the login screen for review access. Real-money purchases, subscriptions, paid tickets, and paid stars are disabled in version 1.0. Demo stars and demo tickets have no cash value.

@@ -13,12 +13,12 @@ Recommended export sizes:
 
 | # | Title | Subtitle | Screen |
 |---|---|---|---|
-| 1 | Вечер начинается в Playa | События, кино и встречи в одной ленте | Login or Home feed with `Продолжить без входа` path tested |
-| 2 | Выбирай по настроению | Кино, музыка, фестивали, еда, travel и не только | Home feed with category rail / expanded categories |
-| 3 | Бронируй место за звёзды | Демо-билеты и QR для review-сценария | Event detail with demo ticket reservation |
-| 4 | Все планы под рукой | Сохранённые события, демо-билеты и ближайшие активности | Events tab |
-| 5 | Чаты с организаторами | Детали, время и быстрые ответы в одном месте | Chats list or chat thread |
-| 6 | Твой Playa-профиль | Демо-звёзды, настройки, поддержка и безопасность | Profile/settings |
+| 1 | Вечер начинается в Playa | События, кино и встречи в одной ленте | `01-login.png` |
+| 2 | Выбирай по настроению | Кино, еда, сторис и события рядом | `02-feed.png` |
+| 3 | Открой все категории | Быстрый список настроений на сегодня | `03-categories.png` |
+| 4 | Бронируй демо-билет | Бесплатный review-сценарий без оплаты | `04-event-detail.png` |
+| 5 | Чаты с организаторами | Детали, время и быстрые ответы в одном месте | `05-chats.png` |
+| 6 | Твой Playa-профиль | Демо-звёзды, настройки, поддержка и безопасность | `06-profile.png` |
 
 ## Capture checklist
 
@@ -29,6 +29,6 @@ Recommended export sizes:
 5. Save raw screenshots into `app-store/screenshots/raw/`.
 6. Save final cropped/exported PNGs into `app-store/screenshots/iphone-6-9/`.
 
-## Current blocker
+## Current status
 
-Local Xcode is installed, but this machine currently lacks a generated `Playa.xcodeproj` and local `xcodegen` binary. CI can build the app and upload to TestFlight. For local screenshot capture, generate the project first with XcodeGen or install from TestFlight on a device.
+The final 6.9-inch screenshot set is captured at `1320 x 2868` and saved in `app-store/screenshots/iphone-6-9/`.

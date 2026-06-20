@@ -4,8 +4,8 @@ Current review candidate: Playa `1.0.0 (15)`.
 
 TestFlight evidence:
 
-- Git commit: `94caacf` (`Harden UGC and App Store release build 15`)
-- GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27880319574
+- Git commit: `5b9d25c` (`Prepare category rail build 15`)
+- GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27881154870
 - Required release step: `Upload to TestFlight = success`
 
 ## App Information
@@ -99,3 +99,5 @@ Required practical set:
 4. Event detail / demo ticket reservation.
 5. Chats screen.
 6. Profile/settings screen.
+
+Final screenshot files are in `app-store/screenshots/iphone-6-9/`.

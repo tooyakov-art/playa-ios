@@ -10,15 +10,18 @@ Total active time: ~2.5 hours setup + 30 min per submission. Apple review wait: 
 
 - **Apple Developer Program** membership (Team `F8LA8PC4U6`)
 - **GitHub** account with repo admin rights to `tooyakov-art/playa-ios`
-- **Supabase** Dashboard access to project `yteqnagkxbbaqjdgoqeu`
+- **Supabase** Dashboard access to a live production project
 
 ---
 
 ## 1. Apply the SQL migration
 
-1. Open Supabase Dashboard → SQL Editor on project `yteqnagkxbbaqjdgoqeu`.
-2. Paste the contents of `supabase/001_delete_own_account.sql`.
-3. Click **Run**. Verify with:
+1. Open Supabase Dashboard → SQL Editor on the live production project.
+2. Apply the SQL files in this order:
+   - `supabase/003_playa_core_schema.sql`
+   - `supabase/002_content_reports.sql`
+   - `supabase/004_release_hardening.sql`
+3. Click **Run** after each file. Verify account deletion with:
    ```sql
    select proname from pg_proc where proname = 'delete_own_account';
    ```
@@ -38,7 +41,7 @@ Total active time: ~2.5 hours setup + 30 min per submission. Apple review wait: 
 ## 3. Create the App Store Connect entry
 
 1. App Store Connect → **My Apps** → **+** → New App
-2. Platform: iOS, Name: **Playa**, Primary Language: Russian, Bundle ID: `app.playahub`, SKU: `playahub-001`
+2. Platform: iOS, Name: **Playa**, Primary Language: Russian, Bundle ID: `app.playahub`, SKU: `playa-ios`
 3. User Access: Full Access
 4. App Information → Category: **Social Networking**
 5. Save
@@ -126,6 +129,7 @@ The build takes ~12–18 minutes. On success, the IPA appears in **TestFlight �
    - **Marketing URL** — `https://playahub.app`
    - **Privacy Policy URL** — `https://github.com/tooyakov-art/playa-ios/blob/main/PRIVACY.md`
 4. **Screenshots** — 6.9" iPhone portrait screenshots first (`1320x2868`, `1290x2796`, or `1260x2736`). Add 5.5" only if App Store Connect asks for the legacy slot. Build 15 is iPhone-only.
+   - Use files from `app-store/screenshots/iphone-6-9/`.
 5. **App Review Information**:
    - Demo account: just use the **"Продолжить без входа"** button — no credentials needed
    - Notes for review:
@@ -157,7 +161,7 @@ The build takes ~12–18 minutes. On success, the IPA appears in **TestFlight �
 | `No matching provisioning profile found` | Profile expired or doesn't include the cert from step 4. Regenerate. |
 | Build uploads but never appears in TestFlight | Check email — Apple often sends "Invalid Binary" reasons (missing Privacy Manifest entries, ITSAppUsesNonExemptEncryption missing, etc.) |
 | `Apple Sign-In` button hangs in TestFlight | Make sure capability is enabled on the App ID **and** included in the provisioning profile. |
-| `delete_own_account` returns 404 | SQL migration not applied. See step 1. |
+| `delete_own_account` returns 404 | Production SQL was not applied. See step 1. |
 ## Social MVP update
 
 Before submitting this build, apply these migrations in Supabase:
