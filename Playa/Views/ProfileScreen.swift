@@ -8,7 +8,7 @@ struct ProfileScreen: View {
     @AppStorage("playa.profile.name") private var profileName = "Гость Playa"
     @AppStorage("playa.profile.username") private var profileUsername = "playa.user"
     @AppStorage("playa.profile.city") private var profileCity = "Алматы"
-    @AppStorage("playa.profile.bio") private var profileBio = "Здесь будут рекомендации, билеты, QR, чаты событий и сохранённые места."
+    @AppStorage("playa.profile.bio") private var profileBio = "Демо-профиль Playa: рекомендации по Алматы, QR-билеты, чаты событий и сохранённые планы на вечер."
 
     @State private var isEditingProfile = false
     @State private var settingsPresented = false
@@ -112,9 +112,9 @@ struct ProfileScreen: View {
 
     private var stats: some View {
         HStack(spacing: 0) {
-            stat("0", "Подписчиков")
+            stat("18", "Подписчиков")
             Divider().background(PlayaStyle.hairline).frame(height: 56)
-            stat("0", "Подписки")
+            stat("7", "Подписок")
             Divider().background(PlayaStyle.hairline).frame(height: 56)
             stat("\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))", "Событий")
         }
@@ -125,13 +125,25 @@ struct ProfileScreen: View {
         VStack(spacing: 10) {
             HStack(spacing: 10) {
                 highlight(title: "Подписка", value: settings.subscriptionTier.title, icon: "crown.fill", color: PlayaStyle.hot)
-                highlight(title: "Демо-звёзды", value: appState.starBalance.formatted(.number.grouping(.automatic)), icon: "star.fill", color: PlayaStyle.lime)
+                highlight(title: "Демо-звёзды", value: displayStarBalance, icon: "star.fill", color: PlayaStyle.lime)
             }
             HStack(spacing: 10) {
-                highlight(title: "Билеты", value: "\(appState.purchasedTicketEventIds.count)", icon: "ticket.fill", color: PlayaStyle.ember)
-                highlight(title: "Сохранено", value: "\(appState.savedEventIds.count)", icon: "bookmark.fill", color: PlayaStyle.cyan)
+                highlight(title: "Билеты", value: displayTicketCount, icon: "ticket.fill", color: PlayaStyle.ember)
+                highlight(title: "Сохранено", value: displaySavedCount, icon: "bookmark.fill", color: PlayaStyle.cyan)
             }
         }
+    }
+
+    private var displayStarBalance: String {
+        appState.starBalance > 0 ? appState.starBalance.formatted(.number.grouping(.automatic)) : "1 000"
+    }
+
+    private var displayTicketCount: String {
+        appState.purchasedTicketEventIds.isEmpty ? "1" : "\(appState.purchasedTicketEventIds.count)"
+    }
+
+    private var displaySavedCount: String {
+        appState.savedEventIds.isEmpty ? "4" : "\(appState.savedEventIds.count)"
     }
 
     private var bio: some View {

@@ -26,9 +26,9 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .free: return "Free"
+        case .free: return "Базовая"
         case .plus: return "Playa Plus"
-        case .organizer: return "Organizer"
+        case .organizer: return "Организатор"
         }
     }
 
