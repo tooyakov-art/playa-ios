@@ -1,6 +1,6 @@
 # Playa App Store Privacy Answers
 
-Use these answers in App Store Connect for build `1.0.0 (16)`. Keep them aligned with `Playa/PrivacyInfo.xcprivacy`.
+Use these answers in App Store Connect for build `1.0.0 (17)`. Keep them aligned with `Playa/PrivacyInfo.xcprivacy`.
 
 ## Tracking
 
@@ -16,7 +16,7 @@ Declare these as linked to the user and used for app functionality:
 - User Content: posts, comments, direct chats, event chats, reports, profile text, avatar/event images if uploaded.
 - Photos or Videos: avatar and event cover images selected by the user.
 
-## Data Not Collected in Build 16
+## Data Not Collected in Build 17
 
 - Payment Info: not collected; real-money purchases are disabled.
 - Purchases: not collected; StoreKit/IAP is disabled.
@@ -39,7 +39,7 @@ All declared data is not used for tracking.
 - Account management is handled as part of app functionality.
 - Moderation/support uses submitted reports and support email.
 
-## Not in build 16
+## Not in build 17
 
 - Real-money in-app purchases are disabled.
 - Subscriptions are disabled.
