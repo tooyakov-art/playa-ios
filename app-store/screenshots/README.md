@@ -1,6 +1,6 @@
 # Playa App Store Screenshot Plan
 
-Build: `1.0.0 (14)`.
+Build: `1.0.0 (15)`.
 
 Target: iPhone-only screenshots. Use 6.9-inch portrait where possible.
 
@@ -22,7 +22,7 @@ Recommended export sizes:
 
 ## Capture checklist
 
-1. Install TestFlight build `1.0.0 (14)` or a local debug build from the same commit `94caacf`.
+1. Install TestFlight build `1.0.0 (15)` or a local debug build from the same commit `5b9d25c`.
 2. Open the app on a 6.9-inch iPhone simulator/device.
 3. Use `Продолжить без входа` for review-mode access.
 4. Keep status bar clean; avoid personal data.

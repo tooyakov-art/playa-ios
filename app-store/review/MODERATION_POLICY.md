@@ -1,6 +1,6 @@
 # Playa Moderation Policy for App Review
 
-Build: Playa `1.0.0 (14)`.
+Build: Playa `1.0.0 (15)`.
 
 ## UGC surfaces
 
@@ -12,7 +12,7 @@ Playa has these user-generated-content surfaces:
 - Event chats.
 - Profile text and avatars.
 
-## User controls in build 14
+## User controls in build 15
 
 - Users can report posts from the feed.
 - Users can report comments from the comments sheet.
@@ -35,4 +35,4 @@ Content that is abusive, hateful, explicit, illegal, spam, impersonation, or uns
 
 ## Real-money note
 
-Build 14 does not sell real-money digital goods, paid tickets, paid stars, or subscriptions. Demo stars have no cash value.
+Build 15 does not sell real-money digital goods, paid tickets, paid stars, or subscriptions. Demo stars have no cash value.

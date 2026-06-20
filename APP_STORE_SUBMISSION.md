@@ -1,10 +1,10 @@
 # Playa App Store Submission Pack
 
-Current review candidate: Playa `1.0.0 (14)`.
+Current review candidate: Playa `1.0.0 (15)`.
 
 TestFlight evidence:
 
-- Git commit: `94caacf` (`Harden UGC and App Store release build 14`)
+- Git commit: `94caacf` (`Harden UGC and App Store release build 15`)
 - GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27880319574
 - Required release step: `Upload to TestFlight = success`
 
@@ -46,7 +46,7 @@ Version 1.0 does not sell real-money digital goods, subscriptions, or paid ticke
 
 ### What’s New
 
-Build 14 prepares Playa for App Store review: iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, visible UGC report/block controls, and hardened TestFlight upload workflow.
+Build 15 prepares Playa for App Store review: polished Russian category rail, iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, visible UGC report/block controls, and hardened TestFlight upload workflow.
 
 ### Support URL
 
@@ -89,7 +89,7 @@ Production hardening note: also apply `supabase/004_release_hardening.sql`.
 
 ## Screenshot Set Needed
 
-Build 14 is iPhone-only. Upload iPhone screenshots only.
+Build 15 is iPhone-only. Upload iPhone screenshots only.
 
 Required practical set:
 

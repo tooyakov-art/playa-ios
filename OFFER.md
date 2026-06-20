@@ -2,7 +2,7 @@
 
 Effective date: June 20, 2026
 
-This document describes the commercial status of Playa build 14.
+This document describes the commercial status of Playa build 15.
 
 Version 1.0 does not sell digital goods, subscriptions, event tickets, or paid stars inside the iOS app. Bonus stars in this build are free review/TestFlight credits used to test ticket reservation flows.
 

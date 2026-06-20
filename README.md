@@ -6,12 +6,12 @@ Native SwiftUI app for Playa: recommendation feed, events, tickets, bonus stars,
 
 - Bundle ID: `app.playahub`
 - App Store name: `Playa`
-- Version: `1.0.0` build `14`
+- Version: `1.0.0` build `15`
 - Apple Team: `F8LA8PC4U6`
 - Stack: Swift 5.9 + SwiftUI, iOS 16+, no external libraries
 - Build: GitHub Actions macOS runner -> TestFlight
 
-## Build 14 Scope
+## Build 15 Scope
 
 - Native SwiftUI `TabView`: Главная, События, Чаты, Профиль.
 - Center floating `+` creates a local TestFlight event and opens it in Events.
