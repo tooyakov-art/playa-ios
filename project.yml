@@ -12,7 +12,7 @@ settings:
     SWIFT_VERSION: "5.9"
     DEVELOPMENT_TEAM: F8LA8PC4U6
     MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "11"
+    CURRENT_PROJECT_VERSION: "13"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
 
 targets:
@@ -23,6 +23,7 @@ targets:
       - path: Playa
     resources:
       - path: Playa/Assets.xcassets
+      - path: Playa/PrivacyInfo.xcprivacy
       - path: Playa/Resources/Fonts
         optional: true
         buildPhase: resources
@@ -70,16 +71,6 @@ targets:
               - playa
         NSCameraUsageDescription: Playa uses the camera to scan event ticket QR codes at venues.
         NSPhotoLibraryUsageDescription: Playa uses your photo library so you can pick an avatar and event cover images.
-        NSPrivacyTracking: false
-        NSPrivacyAccessedAPITypes:
-          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategoryUserDefaults
-            NSPrivacyAccessedAPITypeReasons: ["CA92.1"]
-          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategoryFileTimestamp
-            NSPrivacyAccessedAPITypeReasons: ["C617.1"]
-          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategorySystemBootTime
-            NSPrivacyAccessedAPITypeReasons: ["35F9.1"]
-          - NSPrivacyAccessedAPIType: NSPrivacyAccessedAPICategoryDiskSpace
-            NSPrivacyAccessedAPITypeReasons: ["E174.1"]
     entitlements:
       path: Playa/Playa.entitlements
       properties:
@@ -89,7 +80,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.playahub
         PRODUCT_NAME: Playa
-        TARGETED_DEVICE_FAMILY: "1,2"
+        TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_KEY_UILaunchScreen_Generation: NO

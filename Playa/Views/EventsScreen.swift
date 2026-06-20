@@ -223,7 +223,7 @@ struct EventCard: View {
                     Button(action: onOpen) {
                         HStack(spacing: 8) {
                             Image(systemName: "qrcode")
-                            Text("Купить билет")
+                            Text("Открыть демо-билет")
                         }
                     }
                     .buttonStyle(PlayaPrimaryButton())

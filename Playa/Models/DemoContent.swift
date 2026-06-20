@@ -115,7 +115,7 @@ enum DemoContent {
             "Собрали программу на вечер: фильм, встреча и afterparty. Playa покажет похожие события ниже.",
             "Новая точка на карте города. Внутри есть чат, билеты и детали по времени.",
             "Публикация от аккаунта компании. Так будет выглядеть промо в живой ленте.",
-            "Коротко: \(event.location ?? "Алматы"), \(event.dateText), вход \(event.priceText.lowercased())."
+            "Коротко: \(event.location ?? "Алматы"), \(event.dateText), демо-вход \(event.priceText.lowercased())."
         ]
         let imageIds = [
             "photo-1514525253161-7a46d19cd819",

@@ -172,7 +172,7 @@ final class SocialService {
     }
 
     func joinEvent(eventId: String, userId: String) async throws {
-        _ = try? await supabase.restPost(
+        _ = try await supabase.restPost(
             path: "event_members",
             body: [
                 "event_id": eventId,
@@ -207,8 +207,8 @@ final class SocialService {
         )
     }
 
-    func reportContent(reporterId: String, kind: String, targetId: String, reason: String = "User report") async {
-        _ = try? await supabase.restPost(
+    func reportContent(reporterId: String, kind: String, targetId: String, reason: String = "User report") async throws {
+        _ = try await supabase.restPost(
             path: "content_reports",
             body: [
                 "reporter_id": reporterId,

@@ -202,8 +202,12 @@ struct FeedScreen: View {
             return
         }
         Task {
-            await SocialService(supabase: auth.supabase).reportContent(reporterId: userId, kind: "post", targetId: post.id)
-            ToastCenter.shared.success("Жалоба отправлена")
+            do {
+                try await SocialService(supabase: auth.supabase).reportContent(reporterId: userId, kind: "post", targetId: post.id)
+                ToastCenter.shared.success("Жалоба отправлена")
+            } catch {
+                ToastCenter.shared.error("Не удалось отправить жалобу")
+            }
         }
     }
 }
@@ -677,7 +681,7 @@ struct EventDetailSheet: View {
                         }
                         .playaLabel(color: .white.opacity(0.88))
                         Spacer()
-                        Button("Купить звёзды") { starsStorePresented = true }
+                        Button("Добавить демо-звёзды") { starsStorePresented = true }
                             .playaLabel(color: PlayaStyle.hot)
                     }
                 }
@@ -748,15 +752,15 @@ struct EventDetailSheet: View {
     }
 
     private var ticketButtonTitle: String {
-        if hasTicket { return "Билет куплен" }
-        if event.starPrice == 0 { return "Получить билет бесплатно" }
-        return "Купить билет · \(event.priceText)"
+        if hasTicket { return "Демо-билет добавлен" }
+        if event.starPrice == 0 { return "Добавить бесплатный демо-билет" }
+        return "Добавить демо-билет · \(event.priceText)"
     }
 
     private func buyTicket() {
         do {
             try appState.buyTicket(event: event)
-            ticketMessage = "Билет добавлен. Оплата прошла звёздами."
+            ticketMessage = "Демо-билет добавлен. Звёзды списаны из тестового баланса."
         } catch {
             ticketMessage = error.localizedDescription
             starsStorePresented = true

@@ -135,13 +135,13 @@ struct StarPackage: Identifiable, Hashable {
     var id: Int { stars }
 
     static let telegramStyle: [StarPackage] = [
-        StarPackage(stars: 100, priceText: "₸1 190,00"),
-        StarPackage(stars: 250, priceText: "₸2 900,00"),
-        StarPackage(stars: 500, priceText: "₸5 890,00"),
-        StarPackage(stars: 1_000, priceText: "₸11 790,00"),
-        StarPackage(stars: 2_500, priceText: "₸29 000,00"),
-        StarPackage(stars: 10_000, priceText: "₸117 990,00"),
-        StarPackage(stars: 35_000, priceText: "₸414 990,00")
+        StarPackage(stars: 100, priceText: "Демо"),
+        StarPackage(stars: 250, priceText: "Демо"),
+        StarPackage(stars: 500, priceText: "Демо"),
+        StarPackage(stars: 1_000, priceText: "Демо"),
+        StarPackage(stars: 2_500, priceText: "Демо"),
+        StarPackage(stars: 10_000, priceText: "Демо"),
+        StarPackage(stars: 35_000, priceText: "Демо")
     ]
 }
 

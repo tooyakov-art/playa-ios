@@ -123,8 +123,12 @@ struct EventChatView: View {
 
     private func joinIfNeeded() async {
         guard let currentUserId, !isGuest, !hasJoined else { return }
-        try? await service.joinEvent(eventId: event.id, userId: currentUserId)
-        hasJoined = true
+        do {
+            try await service.joinEvent(eventId: event.id, userId: currentUserId)
+            hasJoined = true
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func reload() async {

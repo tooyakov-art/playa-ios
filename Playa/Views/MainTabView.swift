@@ -116,7 +116,7 @@ private struct CreateEventSheet: View {
                     field(label: "Название", placeholder: "Что за событие?", text: $title)
                     field(label: "Локация", placeholder: "Город · площадка", text: $location)
                     categoryPicker
-                    field(label: "Цена, звёзды", placeholder: "50", text: $price, keyboard: .numberPad)
+                    field(label: "Демо-стоимость, звёзды", placeholder: "50", text: $price, keyboard: .numberPad)
 
                     Button {
                         PlayaFeedback.impact(.medium)

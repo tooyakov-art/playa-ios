@@ -125,7 +125,7 @@ struct ProfileScreen: View {
         VStack(spacing: 10) {
             HStack(spacing: 10) {
                 highlight(title: "Подписка", value: settings.subscriptionTier.title, icon: "crown.fill", color: PlayaStyle.hot)
-                highlight(title: "Звёзды", value: appState.starBalance.formatted(.number.grouping(.automatic)), icon: "star.fill", color: PlayaStyle.lime)
+                highlight(title: "Демо-звёзды", value: appState.starBalance.formatted(.number.grouping(.automatic)), icon: "star.fill", color: PlayaStyle.lime)
             }
             HStack(spacing: 10) {
                 highlight(title: "Билеты", value: "\(appState.purchasedTicketEventIds.count)", icon: "ticket.fill", color: PlayaStyle.ember)
@@ -192,7 +192,7 @@ struct ProfileScreen: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "star.fill")
-                    Text("Купить звёзды")
+                    Text("Добавить демо-звёзды")
                 }
             }
             .buttonStyle(PlayaPrimaryButton())

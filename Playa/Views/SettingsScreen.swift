@@ -158,7 +158,7 @@ struct SettingsScreen: View {
     }
 
     private var starsSection: some View {
-        Section("Звезды и билеты") {
+        Section("Демо-звезды и билеты") {
             HStack {
                 Label("Баланс", systemImage: "star.fill")
                     .foregroundColor(.yellow)
@@ -170,11 +170,11 @@ struct SettingsScreen: View {
             Button {
                 appState.starsStorePresented = true
             } label: {
-                Label("Купить звезды", systemImage: "sparkles")
+                Label("Добавить демо-звезды", systemImage: "sparkles")
             }
 
-            SettingsValueRow(title: "История", value: "Покупки на этом устройстве")
-            SettingsValueRow(title: "Оплата билетов", value: "Только звездами")
+            SettingsValueRow(title: "История", value: "Демо-действия на этом устройстве")
+            SettingsValueRow(title: "Демо-оформление", value: "Через демо-звезды")
         }
         .listRowBackground(Color("Ink800"))
     }

@@ -130,6 +130,17 @@ struct LoginScreen: View {
             .buttonStyle(PlayaBoneButton())
             .disabled(isGoogleLoading)
 
+            Button {
+                PlayaFeedback.selection()
+                auth.continueWithLocalAccount(provider: "guest")
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "person.crop.circle")
+                    Text("Продолжить без входа")
+                }
+            }
+            .buttonStyle(PlayaGhostButton())
+
             if let error = errorMessage {
                 Text(error)
                     .playaCaption()

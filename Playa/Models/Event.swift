@@ -11,7 +11,7 @@ struct PlayaEvent: Identifiable, Hashable, Codable {
     let priceValue: Int
 
     var priceText: String {
-        starPrice == 0 ? "Бесплатно" : "\(starPrice) звезд"
+        starPrice == 0 ? "Бесплатно" : "\(starPrice) демо-звёзд"
     }
 
     var starPrice: Int {

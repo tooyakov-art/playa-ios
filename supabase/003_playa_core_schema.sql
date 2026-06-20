@@ -106,7 +106,7 @@ create table if not exists public.stars_transactions (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
   stars integer not null,
-  kind text not null check (kind in ('purchase', 'ticket', 'refund', 'adjustment')),
+  kind text not null check (kind in ('bonus', 'ticket', 'refund', 'adjustment')),
   event_id uuid references public.events(id) on delete set null,
   created_at timestamptz not null default now()
 );
@@ -159,6 +159,10 @@ alter table public.tickets enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.user_settings enable row level security;
 
+revoke select on public.profiles from anon, authenticated;
+grant select (id, name, username, avatar_url, bio, city, language, onboarded, created_at, updated_at)
+  on public.profiles to anon, authenticated;
+
 drop policy if exists profiles_read on public.profiles;
 create policy profiles_read on public.profiles for select using (true);
 drop policy if exists profiles_insert_own on public.profiles;
@@ -208,7 +212,13 @@ create policy event_messages_members on public.event_messages for select using (
   )
 );
 drop policy if exists event_messages_insert_own on public.event_messages;
-create policy event_messages_insert_own on public.event_messages for insert with check (auth.uid() = sender_id);
+create policy event_messages_insert_own on public.event_messages for insert with check (
+  auth.uid() = sender_id
+  and exists (
+    select 1 from public.event_members em
+    where em.event_id = event_messages.event_id and em.profile_id = auth.uid()
+  )
+);
 
 drop policy if exists chats_participants on public.chats;
 create policy chats_participants on public.chats for all using (auth.uid() in (user1_id, user2_id)) with check (auth.uid() in (user1_id, user2_id));
@@ -221,7 +231,13 @@ create policy messages_participants on public.messages for select using (
   )
 );
 drop policy if exists messages_insert_sender on public.messages;
-create policy messages_insert_sender on public.messages for insert with check (auth.uid() = sender_id);
+create policy messages_insert_sender on public.messages for insert with check (
+  auth.uid() = sender_id
+  and exists (
+    select 1 from public.chats c
+    where c.id = messages.chat_id and auth.uid() in (c.user1_id, c.user2_id)
+  )
+);
 
 drop policy if exists stars_wallets_own on public.stars_wallets;
 create policy stars_wallets_own on public.stars_wallets for select using (auth.uid() = profile_id);

@@ -95,12 +95,12 @@ final class SupabaseClient {
             guard let http = response as? HTTPURLResponse else {
                 return .offline(message: "Supabase вернул не HTTP-ответ.")
             }
-            if (200..<500).contains(http.statusCode) {
+            if (200..<300).contains(http.statusCode) {
                 return .online(statusCode: http.statusCode)
             }
-            return .offline(message: "Supabase отвечает ошибкой HTTP \(http.statusCode).")
+            return .offline(message: "Сервер отвечает ошибкой HTTP \(http.statusCode).")
         } catch {
-            return .offline(message: "Не удалось подключиться к \(baseURL.host ?? "Supabase"): \(error.localizedDescription)")
+            return .offline(message: "Не удалось подключиться к \(baseURL.host ?? "серверу"): \(error.localizedDescription)")
         }
     }
 

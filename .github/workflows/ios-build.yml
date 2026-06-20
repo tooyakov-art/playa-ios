@@ -21,9 +21,11 @@ jobs:
 
       - name: Select Xcode
         run: |
+          set -euo pipefail
           ls /Applications | grep -i Xcode || true
           sudo xcode-select -s /Applications/Xcode_26.app || sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
+          xcodebuild -version | grep -E '^Xcode 26\.' >/dev/null
 
       - name: Show toolchain
         run: |

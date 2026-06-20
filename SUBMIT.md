@@ -122,18 +122,20 @@ The build takes ~12–18 minutes. On success, the IPA appears in **TestFlight �
 3. Fill in:
    - **Description** — what the app does in Russian + English
    - **Keywords** — events, tickets, social, концерты, билеты
-   - **Support URL** — `https://playahub.app/support`
+   - **Support URL** — `https://github.com/tooyakov-art/playa-ios/blob/main/SUPPORT.md`
    - **Marketing URL** — `https://playahub.app`
-   - **Privacy Policy URL** — `https://playahub.app/privacy`
-4. **Screenshots** — 6.7" iPhone (required), 5.5" iPhone (legacy required), iPad 12.9" (if iPad supported)
+   - **Privacy Policy URL** — `https://github.com/tooyakov-art/playa-ios/blob/main/PRIVACY.md`
+4. **Screenshots** — 6.7" iPhone (required), 5.5" iPhone (legacy required). Build 12 is iPhone-only.
 5. **App Review Information**:
-   - Demo account: just use the **"Зайти как гость"** button — no credentials needed
+   - Demo account: just use the **"Продолжить без входа"** button — no credentials needed
    - Notes for review:
      ```
-     Tap "Зайти как гость" on the login screen to access the app without
-     Apple Sign-In. The app shows a curated event feed; ticket purchase and
-     account deletion (RPC delete_own_account) are wired but UGC features
-     (posts, chats) are disabled in v1.0.
+     Tap "Продолжить без входа" on the login screen to access the app without
+     Apple Sign-In. The app shows a curated event feed, events, chats, profile,
+     settings, post reporting, and account deletion. Real-money star purchases
+     and subscriptions are disabled in v1.0; stars are free review bonuses until
+     StoreKit products are submitted. Moderation requests are handled through
+     in-app reports and support@playahub.app.
      ```
 6. **Build** — pick the TestFlight build that arrived from step 8
 7. **Submit for Review**
@@ -160,8 +162,7 @@ The build takes ~12–18 minutes. On success, the IPA appears in **TestFlight �
 
 Before submitting this build, apply these migrations in Supabase:
 
-- Web repo: `supabase/migrations/001_extend.sql`
-- Web repo: `supabase/migrations/20260424_social_onboarding.sql`
+- iOS repo: `supabase/003_playa_core_schema.sql`
 - iOS repo: `supabase/002_content_reports.sql`
 
 The active GitHub Actions workflow is `.github/workflows/ios-build.yml` in the iOS repository. UGC is enabled in v1.0: posts, comments, direct chats, and event chats. Review notes should say that users can report posts and delete their account from Profile.

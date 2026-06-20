@@ -27,12 +27,12 @@ struct StarsStoreSheet: View {
                             )
                             .shadow(color: PlayaStyle.ember.opacity(0.45), radius: 22)
 
-                        Text("Купить звёзды")
+                        Text("Демо-звёзды Playa")
                             .font(.playaDisplay(32, weight: .black))
                             .foregroundColor(.white)
                             .tracking(-0.4)
 
-                        Text("Билеты в Playa оплачиваются звёздами.")
+                        Text("Звёзды сейчас работают как демо-баланс для предпросмотра билетов. Реальные покупки отключены до StoreKit.")
                             .playaBody()
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white.opacity(0.7))
@@ -49,11 +49,12 @@ struct StarsStoreSheet: View {
 
                     Button { } label: {
                         HStack(spacing: 8) {
-                            Text("Показать другие варианты")
-                            Image(systemName: "chevron.down")
+                            Text("Покупки появятся после StoreKit")
+                            Image(systemName: "lock.fill")
                         }
                     }
                     .buttonStyle(PlayaGhostButton())
+                    .disabled(true)
                     .padding(.horizontal, 18)
                     .padding(.bottom, 28)
                 }
@@ -111,7 +112,7 @@ struct StarsStoreSheet: View {
                     .background(Color.white.opacity(0.08), in: Circle())
                     .overlay(Circle().stroke(Color.white.opacity(0.14), lineWidth: 1))
 
-                Text("\(package.stars.formatted(.number.grouping(.automatic))) звёзд")
+                Text("\(package.stars.formatted(.number.grouping(.automatic))) демо-звёзд")
                     .font(.playaSans(17, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()

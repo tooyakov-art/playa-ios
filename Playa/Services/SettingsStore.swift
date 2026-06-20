@@ -34,9 +34,9 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
 
     var priceText: String {
         switch self {
-        case .free: return "0 ₸"
-        case .plus: return "1 990 ₸ / месяц"
-        case .organizer: return "9 990 ₸ / месяц"
+        case .free: return "Включено"
+        case .plus: return "Скоро"
+        case .organizer: return "Скоро"
         }
     }
 
@@ -45,9 +45,9 @@ enum SubscriptionTier: String, CaseIterable, Identifiable {
         case .free:
             return "Лента, события, чаты и билеты."
         case .plus:
-            return "Больше рекомендаций, избранное и быстрые билеты."
+            return "Будет включено после релиза StoreKit-подписок."
         case .organizer:
-            return "Создание мероприятий, промо-посты и аналитика."
+            return "Инструменты организатора появятся отдельным обновлением."
         }
     }
 }
