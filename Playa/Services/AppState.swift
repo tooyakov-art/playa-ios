@@ -17,6 +17,7 @@ final class AppState: ObservableObject {
     @Published private(set) var purchasedTicketEventIds: Set<String> = []
     @Published private(set) var starBalance: Int = 0
     @Published private(set) var createdEvents: [PlayaEvent] = []
+    @Published private(set) var blockedUserIds: Set<String> = []
 
     private let defaults: UserDefaults
     private let likedPostsKey = "playa.posts.liked_ids"
@@ -24,6 +25,7 @@ final class AppState: ObservableObject {
     private let createdEventsKey = "playa.events.created"
     private let starBalanceKey = "playa.stars.balance"
     private let ticketsKey = "playa.tickets.purchased_event_ids"
+    private let blockedUsersKey = "playa.safety.blocked_user_ids"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -32,6 +34,7 @@ final class AppState: ObservableObject {
         createdEvents = Self.loadEvents(defaults: defaults, key: createdEventsKey)
         starBalance = defaults.integer(forKey: starBalanceKey)
         purchasedTicketEventIds = Self.loadStringSet(defaults: defaults, key: ticketsKey)
+        blockedUserIds = Self.loadStringSet(defaults: defaults, key: blockedUsersKey)
     }
 
     func toggleLike(postId: String) {
@@ -97,6 +100,22 @@ final class AppState: ObservableObject {
 
     func hasTicket(eventId: String) -> Bool {
         purchasedTicketEventIds.contains(eventId)
+    }
+
+    func blockUser(id: String) {
+        guard !id.isEmpty else { return }
+        blockedUserIds.insert(id)
+        Self.saveStringSet(blockedUserIds, defaults: defaults, key: blockedUsersKey)
+    }
+
+    func unblockUser(id: String) {
+        blockedUserIds.remove(id)
+        Self.saveStringSet(blockedUserIds, defaults: defaults, key: blockedUsersKey)
+    }
+
+    func isBlocked(userId: String?) -> Bool {
+        guard let userId, !userId.isEmpty else { return false }
+        return blockedUserIds.contains(userId)
     }
 
     private static func loadStringSet(defaults: UserDefaults, key: String) -> Set<String> {

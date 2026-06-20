@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct PostCommentsSheet: View {
+    @EnvironmentObject private var appState: AppState
+
     let post: PlayaPost
     let service: SocialService
     let currentUserId: String?
@@ -86,7 +88,7 @@ struct PostCommentsSheet: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    ForEach(comments) { comment in
+                    ForEach(comments.filter { !appState.isBlocked(userId: $0.authorId) }) { comment in
                         commentRow(comment)
                     }
                 }
@@ -111,6 +113,21 @@ struct PostCommentsSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
+            if comment.authorId != currentUserId {
+                Menu {
+                    Button("Пожаловаться", systemImage: "exclamationmark.bubble") {
+                        reportComment(comment)
+                    }
+                    Button("Заблокировать пользователя", systemImage: "hand.raised.fill", role: .destructive) {
+                        blockCommentAuthor(comment)
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .frame(width: 30, height: 30)
+                }
+            }
         }
         .padding(12)
         .playaPoster()
@@ -199,6 +216,27 @@ struct PostCommentsSheet: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func reportComment(_ comment: PostComment) {
+        Task {
+            guard let reporterId = currentUserId, !isGuest, !isDemoPost else {
+                ToastCenter.shared.success("Жалоба сохранена для модерации")
+                return
+            }
+            do {
+                try await service.reportContent(reporterId: reporterId, kind: "comment", targetId: comment.id, reason: "Comment report")
+                ToastCenter.shared.success("Жалоба отправлена")
+            } catch {
+                ToastCenter.shared.error("Не удалось отправить жалобу")
+            }
+        }
+    }
+
+    private func blockCommentAuthor(_ comment: PostComment) {
+        appState.blockUser(id: comment.authorId)
+        comments.removeAll { $0.authorId == comment.authorId }
+        ToastCenter.shared.success("Пользователь заблокирован")
     }
 }
 

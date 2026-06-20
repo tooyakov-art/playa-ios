@@ -14,7 +14,7 @@ Playa may remove content, restrict access, or disable accounts that violate thes
 
 ## Events and tickets
 
-Build 13 uses bonus stars for review and TestFlight ticket flows. Real-money purchases and subscriptions are disabled in version 1.0 until StoreKit products are ready.
+Build 14 uses bonus stars for review and TestFlight ticket flows. Real-money purchases and subscriptions are disabled in version 1.0 until StoreKit products are ready.
 
 ## Account deletion
 

@@ -6,12 +6,12 @@ Native SwiftUI app for Playa: recommendation feed, events, tickets, bonus stars,
 
 - Bundle ID: `app.playahub`
 - App Store name: `Playa`
-- Version: `1.0.0` build `13`
+- Version: `1.0.0` build `14`
 - Apple Team: `F8LA8PC4U6`
 - Stack: Swift 5.9 + SwiftUI, iOS 16+, no external libraries
 - Build: GitHub Actions macOS runner -> TestFlight
 
-## Build 13 Scope
+## Build 14 Scope
 
 - Native SwiftUI `TabView`: Главная, События, Чаты, Профиль.
 - Center floating `+` creates a local TestFlight event and opens it in Events.
@@ -31,7 +31,8 @@ Apply SQL in this order to the new production Supabase project:
 
 1. `supabase/003_playa_core_schema.sql`
 2. `supabase/002_content_reports.sql` if reports are not already included
-3. `supabase/001_delete_own_account.sql` only as a legacy fallback; `003_playa_core_schema.sql` already recreates `delete_own_account()`
+3. `supabase/004_release_hardening.sql`
+4. `supabase/001_delete_own_account.sql` only as a legacy fallback; `003_playa_core_schema.sql` already recreates `delete_own_account()`
 
 Then update `Playa/Services/PlayaConfig.swift` with the live Supabase URL and anon key, and configure Supabase Auth providers:
 

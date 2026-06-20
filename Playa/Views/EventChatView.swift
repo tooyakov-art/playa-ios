@@ -1,6 +1,8 @@
 ﻿import SwiftUI
 
 struct EventChatView: View {
+    @EnvironmentObject private var appState: AppState
+
     let event: PlayaEvent
     let service: SocialService
     let currentUserId: String?
@@ -48,7 +50,11 @@ struct EventChatView: View {
                     ScrollView {
                         LazyVStack(spacing: 10) {
                             ForEach(messages) { message in
-                                MessageBubble(message: message)
+                                MessageBubble(
+                                    message: message,
+                                    onReport: { reportMessage(message) },
+                                    onBlock: { blockUser(message.senderId) }
+                                )
                                     .id(message.id)
                             }
                         }
@@ -110,7 +116,7 @@ struct EventChatView: View {
 
     private func refreshLoop() async {
         if isDemoEvent {
-            messages = DemoContent.eventMessages(for: event)
+            messages = DemoContent.eventMessages(for: event).filter { !appState.isBlocked(userId: $0.senderId) }
             return
         }
         await joinIfNeeded()
@@ -135,6 +141,7 @@ struct EventChatView: View {
         guard let currentUserId else { return }
         do {
             messages = try await service.loadEventMessages(eventId: event.id, currentUserId: currentUserId)
+                .filter { !appState.isBlocked(userId: $0.senderId) }
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
@@ -152,7 +159,8 @@ struct EventChatView: View {
                     text: value,
                     createdAt: Date(),
                     senderName: "Вы",
-                    senderAvatarURL: nil
+                    senderAvatarURL: nil,
+                    senderId: currentUserId
                 )
             )
             text = ""
@@ -168,6 +176,28 @@ struct EventChatView: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func reportMessage(_ message: ChatMessage) {
+        Task {
+            guard let reporterId = currentUserId, !isGuest, !isDemoEvent else {
+                ToastCenter.shared.success("Жалоба сохранена для модерации")
+                return
+            }
+            do {
+                try await service.reportContent(reporterId: reporterId, kind: "event_message", targetId: message.id, reason: "Event chat report")
+                ToastCenter.shared.success("Жалоба отправлена")
+            } catch {
+                ToastCenter.shared.error("Не удалось отправить жалобу")
+            }
+        }
+    }
+
+    private func blockUser(_ userId: String?) {
+        guard let userId, !userId.isEmpty else { return }
+        appState.blockUser(id: userId)
+        messages.removeAll { $0.senderId == userId }
+        ToastCenter.shared.success("Пользователь заблокирован")
     }
 }
 

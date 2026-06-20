@@ -168,6 +168,7 @@ struct ChatMessage: Identifiable, Hashable {
     let createdAt: Date?
     let senderName: String
     let senderAvatarURL: URL?
+    let senderId: String?
 }
 
 extension ChatMessage {
@@ -179,6 +180,7 @@ extension ChatMessage {
         self.createdAt = Date.playaISO(row.created_at)
         self.senderName = profile.name
         self.senderAvatarURL = profile.avatarURL
+        self.senderId = row.sender_id
     }
 
     struct Row: Decodable {

@@ -14,9 +14,12 @@ create index if not exists content_reports_reporter_idx on public.content_report
 
 alter table public.content_reports enable row level security;
 
+revoke all on public.content_reports from anon;
+grant insert on public.content_reports to authenticated;
+
 drop policy if exists "content_reports_insert_own" on public.content_reports;
 create policy "content_reports_insert_own" on public.content_reports
-  for insert with check (auth.uid() = reporter_id);
+  for insert to authenticated with check (auth.uid() = reporter_id);
 
 drop policy if exists "content_reports_read_none" on public.content_reports;
 create policy "content_reports_read_none" on public.content_reports

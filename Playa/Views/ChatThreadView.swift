@@ -1,6 +1,8 @@
 ﻿import SwiftUI
 
 struct ChatThreadView: View {
+    @EnvironmentObject private var appState: AppState
+
     let chat: ChatPreview
     let service: SocialService
     let currentUserId: String
@@ -56,7 +58,11 @@ struct ChatThreadView: View {
                     ScrollView {
                         LazyVStack(spacing: 8) {
                             ForEach(messages) { message in
-                                MessageBubble(message: message)
+                                MessageBubble(
+                                    message: message,
+                                    onReport: { reportMessage(message) },
+                                    onBlock: { blockUser(message.senderId ?? chat.otherUser.id) }
+                                )
                                     .id(message.id)
                             }
                         }
@@ -118,7 +124,7 @@ struct ChatThreadView: View {
 
     private func refreshLoop() async {
         if isDemoChat {
-            messages = DemoContent.messages(for: chat.id)
+            messages = DemoContent.messages(for: chat.id).filter { !appState.isBlocked(userId: $0.senderId) }
             return
         }
         await reload()
@@ -130,11 +136,12 @@ struct ChatThreadView: View {
 
     private func reload(silent: Bool = false) async {
         if isDemoChat {
-            messages = DemoContent.messages(for: chat.id)
+            messages = DemoContent.messages(for: chat.id).filter { !appState.isBlocked(userId: $0.senderId) }
             return
         }
         do {
             messages = try await service.loadChatMessages(chatId: chat.id, currentUserId: currentUserId)
+                .filter { !appState.isBlocked(userId: $0.senderId) }
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
@@ -152,7 +159,8 @@ struct ChatThreadView: View {
                     text: value,
                     createdAt: Date(),
                     senderName: "Вы",
-                    senderAvatarURL: nil
+                    senderAvatarURL: nil,
+                    senderId: currentUserId
                 )
             )
             text = ""
@@ -167,14 +175,38 @@ struct ChatThreadView: View {
             errorMessage = error.localizedDescription
         }
     }
+
+    private func reportMessage(_ message: ChatMessage) {
+        Task {
+            if isDemoChat || isGuest {
+                ToastCenter.shared.success("Жалоба сохранена для модерации")
+                return
+            }
+            do {
+                try await service.reportContent(reporterId: currentUserId, kind: "message", targetId: message.id, reason: "Direct chat report")
+                ToastCenter.shared.success("Жалоба отправлена")
+            } catch {
+                ToastCenter.shared.error("Не удалось отправить жалобу")
+            }
+        }
+    }
+
+    private func blockUser(_ userId: String) {
+        appState.blockUser(id: userId)
+        messages.removeAll { $0.senderId == userId }
+        ToastCenter.shared.success("Пользователь заблокирован")
+    }
 }
 
 // MARK: - Bubble
 
 struct MessageBubble: View {
     let message: ChatMessage
+    var onReport: (() -> Void)?
+    var onBlock: (() -> Void)?
 
     private var isMine: Bool { message.sender == .user }
+    private var canModerate: Bool { !isMine && (onReport != nil || onBlock != nil) }
 
     var body: some View {
         HStack {
@@ -195,6 +227,22 @@ struct MessageBubble: View {
                         lineWidth: 1
                     )
                 )
+
+            if canModerate {
+                Menu {
+                    Button("Пожаловаться", systemImage: "exclamationmark.bubble") {
+                        onReport?()
+                    }
+                    Button("Заблокировать пользователя", systemImage: "hand.raised.fill", role: .destructive) {
+                        onBlock?()
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .frame(width: 30, height: 30)
+                }
+            }
 
             if !isMine { Spacer(minLength: 48) }
         }

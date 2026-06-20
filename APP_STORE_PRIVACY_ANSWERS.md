@@ -1,6 +1,6 @@
 # Playa App Store Privacy Answers
 
-Use these answers in App Store Connect for build `1.0.0 (13)`. Keep them aligned with `Playa/PrivacyInfo.xcprivacy`.
+Use these answers in App Store Connect for build `1.0.0 (14)`. Keep them aligned with `Playa/PrivacyInfo.xcprivacy`.
 
 ## Tracking
 
@@ -32,4 +32,3 @@ All declared data is not used for tracking.
 - Subscriptions are disabled.
 - Paid tickets are disabled.
 - Advertising tracking is not used.
-

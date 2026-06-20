@@ -125,7 +125,7 @@ The build takes ~12–18 minutes. On success, the IPA appears in **TestFlight �
    - **Support URL** — `https://github.com/tooyakov-art/playa-ios/blob/main/SUPPORT.md`
    - **Marketing URL** — `https://playahub.app`
    - **Privacy Policy URL** — `https://github.com/tooyakov-art/playa-ios/blob/main/PRIVACY.md`
-4. **Screenshots** — 6.7" iPhone (required), 5.5" iPhone (legacy required). Build 13 is iPhone-only.
+4. **Screenshots** — 6.7" iPhone (required), 5.5" iPhone (legacy required). Build 14 is iPhone-only.
 5. **App Review Information**:
    - Demo account: just use the **"Продолжить без входа"** button — no credentials needed
    - Notes for review:
@@ -164,5 +164,6 @@ Before submitting this build, apply these migrations in Supabase:
 
 - iOS repo: `supabase/003_playa_core_schema.sql`
 - iOS repo: `supabase/002_content_reports.sql`
+- iOS repo: `supabase/004_release_hardening.sql`
 
 The active GitHub Actions workflow is `.github/workflows/ios-build.yml` in the iOS repository. UGC is enabled in v1.0: posts, comments, direct chats, and event chats. Review notes should say that users can report posts and delete their account from Profile.

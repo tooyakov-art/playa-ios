@@ -11,4 +11,4 @@ Recommended message details:
 - Screenshot or screen name.
 - Short description of the issue.
 
-Current App Store review build: Playa 1.0.0 build 13.
+Current App Store review build: Playa 1.0.0 build 14.

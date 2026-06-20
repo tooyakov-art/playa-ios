@@ -23,12 +23,12 @@ begin
   -- missing table does not abort the whole transaction.
   begin delete from public.event_messages   where sender_id = uid;                                exception when undefined_table then null; end;
   begin delete from public.event_comments   where author_id = uid;                                exception when undefined_table then null; end;
-  begin delete from public.event_members    where user_id = uid;                                  exception when undefined_table then null; end;
+  begin delete from public.event_members    where profile_id = uid;                               exception when undefined_table or undefined_column then null; end;
   begin delete from public.events           where creator_id = uid;                               exception when undefined_table then null; end;
   begin delete from public.post_comments    where author_id = uid;                                exception when undefined_table then null; end;
   begin delete from public.posts            where author_id = uid;                                exception when undefined_table then null; end;
   begin delete from public.follows          where follower_id = uid or following_id = uid;        exception when undefined_table then null; end;
-  begin delete from public.tickets          where user_id = uid;                                  exception when undefined_table then null; end;
+  begin delete from public.tickets          where profile_id = uid;                               exception when undefined_table or undefined_column then null; end;
   begin delete from public.direct_messages  where sender_id = uid;                                exception when undefined_table then null; end;
   begin delete from public.direct_chats     where uid = any(participants);                        exception when undefined_table then null; end;
   begin delete from public.profiles         where id = uid;                                       exception when undefined_table then null; end;
@@ -37,4 +37,5 @@ begin
 end;
 $$;
 
+revoke execute on function public.delete_own_account() from public, anon;
 grant execute on function public.delete_own_account() to authenticated;

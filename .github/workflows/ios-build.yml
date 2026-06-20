@@ -3,6 +3,10 @@ name: iOS build & TestFlight upload
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "*.md"
+      - "app-store/**"
+      - "docs/**"
   workflow_dispatch:
 
 jobs:
@@ -88,6 +92,18 @@ jobs:
           cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
           echo "Installed profile UUID: $UUID"
 
+      - name: Validate provisioning profile
+        run: |
+          set -euo pipefail
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          PROFILE_PLIST="$RUNNER_TEMP/profile.plist"
+          security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"
+
+          /usr/libexec/PlistBuddy -c 'Print TeamIdentifier:0' "$PROFILE_PLIST" | grep -x 'F8LA8PC4U6'
+          /usr/libexec/PlistBuddy -c 'Print Entitlements:application-identifier' "$PROFILE_PLIST" | grep -x 'F8LA8PC4U6.app.playahub'
+          /usr/libexec/PlistBuddy -c 'Print Entitlements:get-task-allow' "$PROFILE_PLIST" | grep -x 'false'
+          /usr/libexec/PlistBuddy -c 'Print Entitlements:com.apple.developer.applesignin:0' "$PROFILE_PLIST" | grep -x 'Default'
+
       - name: Resolve provisioning profile name
         id: profile
         run: |
@@ -147,6 +163,18 @@ jobs:
           echo "p8 size: $(wc -c < "$P8_PATH")"
           mkdir -p ./private_keys
           cp "$P8_PATH" ./private_keys/
+
+      - name: Validate IPA with App Store Connect
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          IPA=$(ls "$EXPORT_PATH"/*.ipa | head -n 1)
+          xcrun altool --validate-app \
+            --type ios \
+            --file "$IPA" \
+            --apiKey "$ASC_API_KEY_ID" \
+            --apiIssuer "$ASC_API_ISSUER_ID"
 
       - name: Upload to TestFlight
         env:

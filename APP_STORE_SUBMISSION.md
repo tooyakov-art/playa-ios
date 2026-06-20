@@ -1,11 +1,11 @@
 # Playa App Store Submission Pack
 
-Current review candidate: Playa `1.0.0 (13)`.
+Current review candidate: Playa `1.0.0 (14)`.
 
 TestFlight evidence:
 
-- Git commit: `1188799` (`Prepare App Store review build 13`)
-- GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27879943650
+- Git commit: build 14 commit after UGC/report-block hardening
+- GitHub Actions run: use the latest successful `iOS build & TestFlight upload` run for build 14
 - Required release step: `Upload to TestFlight = success`
 
 ## App Information
@@ -37,7 +37,7 @@ Version 1.0 does not sell real-money digital goods, subscriptions, or paid ticke
 
 ### What’s New
 
-Build 13 prepares Playa for App Store review: iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, and hardened TestFlight upload workflow.
+Build 14 prepares Playa for App Store review: iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, visible UGC report/block controls, and hardened TestFlight upload workflow.
 
 ### Support URL
 
@@ -78,7 +78,7 @@ Backend note: connect the production Supabase project and apply `supabase/003_pl
 
 ## Screenshot Set Needed
 
-Build 13 is iPhone-only. Upload iPhone screenshots only.
+Build 14 is iPhone-only. Upload iPhone screenshots only.
 
 Required practical set:
 
@@ -88,4 +88,3 @@ Required practical set:
 4. Event detail / demo ticket reservation.
 5. Chats screen.
 6. Profile/settings screen.
-
