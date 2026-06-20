@@ -7,6 +7,7 @@ on:
       - "*.md"
       - "app-store/**"
       - "docs/**"
+      - "scripts/capture-app-store-screenshots.sh"
   workflow_dispatch:
 
 jobs:
