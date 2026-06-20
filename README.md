@@ -20,7 +20,7 @@ Native SwiftUI app for Playa: recommendation feed, events, tickets, bonus stars,
 - Settings screen includes account edit, logout, delete account, language, subscription, stars, notifications, documents, support, app version, and database status.
 - Profile shows editable user data, subscription, stars, tickets, saved events, event gallery, and settings entry.
 - Feed has movies, banners, event recommendations, infinite demo posts, working likes, and event saves.
-- Events use bonus-star ticket reservation and local saved state for build 12.
+- Events use bonus-star ticket reservation and local saved state for build 16.
 - Stars store no longer shows real-money prices; StoreKit purchases are disabled in v1.0 until IAP products are ready.
 
 ## Supabase
