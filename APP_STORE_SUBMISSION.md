@@ -4,7 +4,7 @@ Current review candidate: Playa `1.0.0 (16)`.
 
 TestFlight evidence:
 
-- Git commit: `5b9d25c` (`Prepare category rail build 16`)
+- Git commit: `f0e14e1` (`Make review mode primary for build 16`)
 - GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27882234806
 - Required release step: `Upload to TestFlight = success`
 
