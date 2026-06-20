@@ -11,7 +11,7 @@ Native SwiftUI app for Playa: recommendation feed, events, tickets, bonus stars,
 - Stack: Swift 5.9 + SwiftUI, iOS 16+, no external libraries
 - Build: GitHub Actions macOS runner -> TestFlight
 
-## Build 16 Scope
+## Build 17 Scope
 
 - Native SwiftUI `TabView`: Главная, События, Чаты, Профиль.
 - Center floating `+` creates a local TestFlight event and opens it in Events.
@@ -20,7 +20,7 @@ Native SwiftUI app for Playa: recommendation feed, events, tickets, bonus stars,
 - Settings screen includes account edit, logout, delete account, language, subscription, stars, notifications, documents, support, app version, and database status.
 - Profile shows editable user data, subscription, stars, tickets, saved events, event gallery, and settings entry.
 - Feed has movies, banners, event recommendations, infinite demo posts, working likes, and event saves.
-- Events use bonus-star ticket reservation and local saved state for build 16.
+- Events use bonus-star ticket reservation and local saved state for build 17.
 - Stars store no longer shows real-money prices; StoreKit purchases are disabled in v1.0 until IAP products are ready.
 
 ## Supabase

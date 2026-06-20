@@ -1,11 +1,11 @@
 # Playa App Store Submission Pack
 
-Current review candidate: Playa `1.0.0 (16)`.
+Current review candidate: Playa `1.0.0 (17)`.
 
 TestFlight evidence:
 
-- Git commit: `f0e14e1` (`Make review mode primary for build 16`)
-- GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27882234806
+- Git commit: `44ebf7c` (`Polish profile review state for build 17`)
+- GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27882824834
 - Required release step: `Upload to TestFlight = success`
 
 ## App Information
@@ -46,7 +46,7 @@ Version 1.0 does not sell real-money digital goods, subscriptions, or paid ticke
 
 ### What’s New
 
-Build 16 prepares Playa for App Store review: primary guest review mode, polished Russian category rail, iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, visible UGC report/block controls, and hardened TestFlight upload workflow.
+Build 17 prepares Playa for App Store review: primary guest review mode, polished Russian category rail, iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, visible UGC report/block controls, and hardened TestFlight upload workflow.
 
 ### Support URL
 
@@ -89,7 +89,7 @@ Production hardening note: also apply `supabase/004_release_hardening.sql`.
 
 ## Screenshot Set Needed
 
-Build 16 is iPhone-only. Upload iPhone screenshots only.
+Build 17 is iPhone-only. Upload iPhone screenshots only.
 
 Required practical set:
 

@@ -1,6 +1,6 @@
 # App Store Connect Metadata
 
-Build: Playa `1.0.0 (16)`.
+Build: Playa `1.0.0 (17)`.
 
 ## Required app/version fields
 
@@ -45,7 +45,7 @@ Keywords:
 What's New:
 
 ```text
-Build 16 prepares Playa for App Store review: primary guest review mode, polished Russian category rail, iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, visible UGC report/block controls, and hardened TestFlight upload workflow.
+Build 17 prepares Playa for App Store review: primary guest review mode, polished Russian category rail, iPhone-only release target, privacy manifest, review legal documents, clearer demo-star ticket flow, visible UGC report/block controls, and hardened TestFlight upload workflow.
 ```
 
 Support URL:
