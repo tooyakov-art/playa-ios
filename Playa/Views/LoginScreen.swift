@@ -104,6 +104,23 @@ struct LoginScreen: View {
 
     private var authBlock: some View {
         VStack(spacing: 12) {
+            Button {
+                PlayaFeedback.selection()
+                auth.continueWithLocalAccount(provider: "guest")
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "person.crop.circle.fill")
+                    Text("Продолжить без входа")
+                }
+            }
+            .buttonStyle(PlayaPrimaryButton())
+
+            Text("Режим проверки открывает ленту, события, чаты и профиль без аккаунта.")
+                .playaCaption()
+                .foregroundColor(.white.opacity(0.58))
+                .multilineTextAlignment(.center)
+                .padding(.bottom, 4)
+
             SignInWithAppleButton(.signIn) { request in
                 request.requestedScopes = [.fullName, .email]
             } onCompletion: { result in
@@ -129,17 +146,6 @@ struct LoginScreen: View {
             }
             .buttonStyle(PlayaBoneButton())
             .disabled(isGoogleLoading)
-
-            Button {
-                PlayaFeedback.selection()
-                auth.continueWithLocalAccount(provider: "guest")
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "person.crop.circle")
-                    Text("Продолжить без входа")
-                }
-            }
-            .buttonStyle(PlayaGhostButton())
 
             if let error = errorMessage {
                 Text(error)
