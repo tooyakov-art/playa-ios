@@ -4,18 +4,27 @@ Current review candidate: Playa `1.0.0 (14)`.
 
 TestFlight evidence:
 
-- Git commit: build 14 commit after UGC/report-block hardening
-- GitHub Actions run: use the latest successful `iOS build & TestFlight upload` run for build 14
+- Git commit: `94caacf` (`Harden UGC and App Store release build 14`)
+- GitHub Actions run: https://github.com/tooyakov-art/playa-ios/actions/runs/27880319574
 - Required release step: `Upload to TestFlight = success`
 
 ## App Information
 
 - App name: Playa
+- Subtitle: Афиша и встречи города
 - Bundle ID: `app.playahub`
 - SKU: `playa-ios`
+- Primary language: Russian
 - Primary category: Social Networking
+- Secondary category: Entertainment
+- Copyright: 2026 Playa
+- License agreement: Apple Standard EULA
 - Content rights: The app does not contain, show, or access third-party content unless users create or share it inside the app.
 - Age rating suggestion: 12+ because the app contains user-generated social content and event/chat features.
+- Version release setting: Manual release after approval.
+- Pricing: Free.
+- Availability: confirm target countries/regions in App Store Connect.
+- DSA status: owner must confirm trader/non-trader status in App Store Connect.
 
 ## Version Information
 
@@ -56,6 +65,7 @@ https://github.com/tooyakov-art/playa-ios/blob/main/PRIVACY.md
 ### Contact
 
 - Email: support@playahub.app
+- Name: Add owner/review contact name in App Store Connect.
 - Phone: Add a reachable review phone number in App Store Connect.
 
 ### Demo Access
@@ -75,6 +85,7 @@ Real-money star purchases, subscriptions, paid digital goods, and paid tickets a
 UGC/moderation: users can report posts inside the app; moderation and support requests go to support@playahub.app. Account deletion is available from Settings.
 
 Backend note: connect the production Supabase project and apply `supabase/003_playa_core_schema.sql` plus `supabase/002_content_reports.sql` before final App Store submission.
+Production hardening note: also apply `supabase/004_release_hardening.sql`.
 
 ## Screenshot Set Needed
 
