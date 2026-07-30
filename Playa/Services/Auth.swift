@@ -10,14 +10,20 @@ final class Auth: ObservableObject {
     @Published private(set) var isGuest: Bool = false
     @Published private(set) var isLocalAccount: Bool = false
 
+    var isDemoMode: Bool { isGuest || isLocalAccount }
+
+    var accountModeTitle: String {
+        isDemoMode ? "Демо-режим" : "Аккаунт Playa"
+    }
+
     let supabase = SupabaseClient()
     private var webAuthSession: ASWebAuthenticationSession?
     private let presentationProvider = WebAuthPresentationProvider()
 
-    // Secret tokens — moved to Keychain (`Keychain.set/get`).
+    // Secret tokens live in Keychain.
     private let tokenKey = "playa.session.access_token"
     private let refreshKey = "playa.session.refresh_token"
-    // Non-secret identifiers — stay in UserDefaults for fast unauthenticated reads.
+    // Non-secret identifiers stay in UserDefaults for fast session restoration.
     private let userIdKey = "playa.session.user_id"
     private let emailKey = "playa.session.email"
     private let guestKey = "playa.session.guest"
@@ -73,7 +79,9 @@ final class Auth: ObservableObject {
     }
 
     func continueWithLocalAccount(provider: String) {
-        storeLocalAccount(provider: provider, userId: "\(provider)-local", email: "\(provider)@playa.local")
+        // Local access is deliberately email-free. A synthetic address such as
+        // google@playa.local looked like a connected account and damaged trust.
+        storeLocalAccount(provider: provider, userId: "\(provider)-local", email: nil)
     }
 
     func signOut() async {
@@ -99,8 +107,6 @@ final class Auth: ObservableObject {
 
     // MARK: - Persistence
 
-    /// One-time pass — moves any pre-existing tokens out of UserDefaults
-    /// (where they sat in plaintext) into the Keychain.
     private func migrateLegacyTokensToKeychain() {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: migrationFlagKey) else { return }
@@ -128,9 +134,9 @@ final class Auth: ObservableObject {
             supabase.accessToken = nil
             supabase.refreshToken = nil
             userId = uid
-            userEmail = defaults.string(forKey: emailKey) ?? "\(localProvider)@playa.local"
+            userEmail = defaults.string(forKey: emailKey)
             isAuthenticated = true
-            isGuest = false
+            isGuest = localProvider == "guest"
             isLocalAccount = true
             return
         }
@@ -158,7 +164,11 @@ final class Auth: ObservableObject {
             Keychain.remove(refreshKey)
         }
         defaults.set(session.user.id, forKey: userIdKey)
-        defaults.set(session.user.email, forKey: emailKey)
+        if let email = session.user.email, !email.isEmpty {
+            defaults.set(email, forKey: emailKey)
+        } else {
+            defaults.removeObject(forKey: emailKey)
+        }
         defaults.removeObject(forKey: guestKey)
         defaults.removeObject(forKey: localProviderKey)
 
@@ -171,19 +181,23 @@ final class Auth: ObservableObject {
         isLocalAccount = false
     }
 
-    private func storeLocalAccount(provider: String, userId: String, email: String) {
+    private func storeLocalAccount(provider: String, userId: String, email: String?) {
         let defaults = UserDefaults.standard
         clearStorage()
         defaults.set(provider, forKey: localProviderKey)
         defaults.set(userId, forKey: userIdKey)
-        defaults.set(email, forKey: emailKey)
+        if let email, !email.isEmpty {
+            defaults.set(email, forKey: emailKey)
+        } else {
+            defaults.removeObject(forKey: emailKey)
+        }
 
         supabase.accessToken = nil
         supabase.refreshToken = nil
         self.userId = userId
         userEmail = email
         isAuthenticated = true
-        isGuest = false
+        isGuest = provider == "guest"
         isLocalAccount = true
     }
 
