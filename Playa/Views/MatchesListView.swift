@@ -7,6 +7,7 @@ struct MatchesListView: View {
     @State private var selectedChat: ChatPreview?
     @State private var isLoading = false
     @State private var chatError: String?
+    @State private var filter: ChatFilter = .messages
 
     var body: some View {
         NavigationStack {
@@ -14,87 +15,116 @@ struct MatchesListView: View {
                 PlayaBackground()
 
                 ScrollView {
-                    LazyVStack(spacing: 0, pinnedViews: []) {
+                    LazyVStack(spacing: 14) {
                         header
                             .padding(.horizontal, 20)
                             .padding(.top, 16)
-                            .padding(.bottom, 14)
 
-                        sectionLabel("Диалоги")
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
+                        Picker("Раздел чатов", selection: $filter) {
+                            ForEach(ChatFilter.allCases) { item in
+                                Text(item.title).tag(item)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal, 16)
+                        .accessibilityLabel("Выбрать диалоги или бренды")
 
-                        if isLoading {
-                            ProgressView()
+                        if isLoading && filter == .messages {
+                            ProgressView("Обновляем диалоги")
                                 .tint(PlayaStyle.hot)
-                                .padding(.vertical, 14)
+                                .foregroundColor(.white.opacity(0.65))
+                                .padding(.vertical, 10)
                         }
 
-                        if let chatError {
-                            Text(chatError)
-                                .playaCaption()
-                                .foregroundColor(.white.opacity(0.55))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 6)
-                        }
-
-                        VStack(spacing: 8) {
-                            ForEach(chats) { chat in
-                                Button { selectedChat = chat } label: {
-                                    ChatPreviewRow(chat: chat)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-
-                        sectionLabel("Бренды и компании")
-                            .padding(.horizontal, 20)
-                            .padding(.top, 24)
-
-                        VStack(spacing: 8) {
-                            ForEach(DemoContent.companies) { person in
+                        if let chatError, filter == .messages {
+                            VStack(spacing: 10) {
+                                Text(chatError)
+                                    .playaCaption()
+                                    .foregroundColor(.white.opacity(0.58))
+                                    .multilineTextAlignment(.center)
                                 Button {
-                                    selectedChat = ChatPreview(
-                                        id: "chat-\(person.id)",
-                                        otherUser: person,
-                                        lastMessage: "Здравствуйте! Это тестовый диалог Playa.",
-                                        lastMessageAt: Date()
-                                    )
+                                    Task { await reloadChats() }
                                 } label: {
-                                    CompanyRow(person: person)
+                                    Label("Повторить", systemImage: "arrow.clockwise")
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(PlayaGhostButton())
                             }
+                            .padding(.horizontal, 20)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+
+                        content
+                            .padding(.horizontal, 16)
                     }
-                    .padding(.bottom, 110)
+                    .padding(.bottom, 32)
                 }
-                .refreshable { await reloadChats() }
+                .refreshable {
+                    if filter == .messages {
+                        await reloadChats()
+                    }
+                }
             }
             .navigationBarHidden(true)
-            .task {
-                await reloadChats()
-            }
+            .task { await reloadChats() }
             .sheet(item: $selectedChat) { chat in
                 NavigationStack {
                     ChatThreadView(
                         chat: chat,
                         service: SocialService(supabase: auth.supabase),
                         currentUserId: auth.userId ?? "guest",
-                        isGuest: auth.isGuest || auth.isLocalAccount
+                        isGuest: auth.isDemoMode
                     )
                 }
             }
         }
     }
 
+    @ViewBuilder
+    private var content: some View {
+        switch filter {
+        case .messages:
+            VStack(alignment: .leading, spacing: 10) {
+                sectionLabel("Личные диалоги", count: chats.count)
+                if chats.isEmpty && !isLoading {
+                    EmptyStateView(
+                        title: "Диалогов пока нет",
+                        message: "Когда ты напишешь организатору или участнику, беседа появится здесь."
+                    )
+                    .playaPoster()
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(chats) { chat in
+                            Button { selectedChat = chat } label: {
+                                ChatPreviewRow(chat: chat)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        case .brands:
+            VStack(alignment: .leading, spacing: 10) {
+                sectionLabel("Площадки и организаторы", count: DemoContent.companies.count)
+                VStack(spacing: 8) {
+                    ForEach(DemoContent.companies) { person in
+                        Button {
+                            selectedChat = ChatPreview(
+                                id: "chat-\(person.id)",
+                                otherUser: person,
+                                lastMessage: "Откройте диалог, чтобы задать вопрос организатору.",
+                                lastMessageAt: Date()
+                            )
+                        } label: {
+                            CompanyRow(person: person)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
     private func reloadChats() async {
-        guard let userId = auth.userId, !auth.isLocalAccount, !auth.isGuest else {
+        guard !auth.isDemoMode, let userId = auth.userId else {
             chats = DemoContent.demoChats
             return
         }
@@ -105,13 +135,13 @@ struct MatchesListView: View {
 
         do {
             let liveChats = try await SocialService(supabase: auth.supabase).loadDirectChats(currentUserId: userId)
-            chats = liveChats.isEmpty ? DemoContent.demoChats : liveChats
+            chats = liveChats
             if liveChats.isEmpty {
-                chatError = "Диалогов пока нет, показываем полезные контакты."
+                chatError = nil
             }
         } catch {
             chats = DemoContent.demoChats
-            chatError = "Связь с сервером нестабильна, показываем сохранённые диалоги."
+            chatError = "Сервер не ответил. Показываем сохранённые демо-диалоги."
         }
     }
 
@@ -120,7 +150,7 @@ struct MatchesListView: View {
             HStack(spacing: 8) {
                 Text("Чаты")
                 Text("·")
-                Text("\(chats.count + DemoContent.companies.count) активно")
+                Text(filter == .messages ? "\(chats.count) диалогов" : "\(DemoContent.companies.count) брендов")
             }
             .playaLabel()
 
@@ -141,19 +171,37 @@ struct MatchesListView: View {
             .tracking(-0.6)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
+
+            Text("Личные беседы и страницы организаторов теперь разделены.")
+                .playaBody()
+                .foregroundColor(.white.opacity(0.58))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func sectionLabel(_ text: String) -> some View {
+    private func sectionLabel(_ text: String, count: Int) -> some View {
         HStack {
             Text(text).playaLabel()
             Spacer()
+            Text("\(count)")
+                .playaLabel(color: .white.opacity(0.42))
         }
     }
 }
 
-// MARK: - Rows
+private enum ChatFilter: String, CaseIterable, Identifiable {
+    case messages
+    case brands
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .messages: return "Диалоги"
+        case .brands: return "Бренды"
+        }
+    }
+}
 
 private struct ChatPreviewRow: View {
     let chat: ChatPreview
@@ -206,6 +254,9 @@ private struct CompanyRow: View {
                     .playaLabel(color: .white.opacity(0.5))
             }
             Spacer()
+            Text("ОРГАНИЗАТОР")
+                .playaLabel(color: .white.opacity(0.38))
+                .minimumScaleFactor(0.7)
             Image(systemName: "arrow.up.right")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.3))
