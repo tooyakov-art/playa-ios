@@ -2,6 +2,7 @@
 
 struct ChatThreadView: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.dismiss) private var dismiss
 
     let chat: ChatPreview
     let service: SocialService
@@ -21,49 +22,18 @@ struct ChatThreadView: View {
             PlayaBackground()
 
             VStack(spacing: 0) {
-                // Header
-                HStack(spacing: 12) {
-                    AvatarView(url: chat.otherUser.avatarURL, fallback: String(chat.otherUser.name.prefix(1)))
-                        .frame(width: 38, height: 38)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text(chat.otherUser.name)
-                                .font(.playaSans(15, weight: .bold))
-                                .foregroundColor(.white)
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(PlayaStyle.cyan)
-                        }
-                        Text("@\(chat.otherUser.username ?? "playa")")
-                            .playaLabel(color: .white.opacity(0.5))
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(
-                    Rectangle()
-                        .fill(PlayaStyle.ink900.opacity(0.6))
-                        .background(.ultraThinMaterial)
-                        .overlay(
-                            Rectangle()
-                                .frame(height: 1)
-                                .foregroundColor(PlayaStyle.hairline),
-                            alignment: .bottom
-                        )
-                )
+                header
 
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(spacing: 8) {
+                        LazyVStack(spacing: 10) {
                             ForEach(messages) { message in
                                 MessageBubble(
                                     message: message,
                                     onReport: { reportMessage(message) },
                                     onBlock: { blockUser(message.senderId ?? chat.otherUser.id) }
                                 )
-                                    .id(message.id)
+                                .id(message.id)
                             }
                         }
                         .padding(14)
@@ -76,50 +46,103 @@ struct ChatThreadView: View {
                 }
 
                 if let errorMessage {
-                    Text(errorMessage)
-                        .playaCaption()
-                        .foregroundColor(PlayaStyle.hot)
-                        .padding(.horizontal, 14)
-                        .padding(.bottom, 4)
-                }
-
-                HStack(spacing: 10) {
-                    TextField("", text: $text, prompt: Text("Сообщение").foregroundColor(.white.opacity(0.4)), axis: .vertical)
-                        .font(.playaSans(15, weight: .regular))
-                        .foregroundColor(.white)
-                        .tint(PlayaStyle.hot)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.white.opacity(0.06))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                        )
-
-                    Button {
-                        Task { await send() }
-                    } label: {
-                        Image(systemName: "arrow.up")
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                        Text(errorMessage)
+                        Spacer()
+                        Button("Повторить") {
+                            Task { await reload() }
+                        }
                     }
-                    .buttonStyle(ChatSendButtonStyle())
-                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .opacity(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)
+                    .playaCaption()
+                    .foregroundColor(PlayaStyle.hot)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 6)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    Rectangle()
-                        .fill(PlayaStyle.ink900.opacity(0.7))
-                        .background(.ultraThinMaterial)
-                )
+
+                composer
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .navigationBarHidden(true)
         .task { await refreshLoop() }
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(PlayaIconButton(size: 38))
+            .accessibilityLabel("Закрыть диалог")
+
+            AvatarView(url: chat.otherUser.avatarURL, fallback: String(chat.otherUser.name.prefix(1)))
+                .frame(width: 38, height: 38)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(chat.otherUser.name)
+                        .font(.playaSans(15, weight: .bold))
+                        .foregroundColor(.white)
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(PlayaStyle.cyan)
+                }
+                Text("Личный диалог · @\(chat.otherUser.username ?? "playa")")
+                    .playaLabel(color: .white.opacity(0.5))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            Rectangle()
+                .fill(PlayaStyle.ink900.opacity(0.72))
+                .background(.ultraThinMaterial)
+                .overlay(
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(PlayaStyle.hairline),
+                    alignment: .bottom
+                )
+        )
+    }
+
+    private var composer: some View {
+        HStack(spacing: 10) {
+            TextField("", text: $text, prompt: Text("Сообщение").foregroundColor(.white.opacity(0.4)), axis: .vertical)
+                .font(.playaSans(15, weight: .regular))
+                .foregroundColor(.white)
+                .tint(PlayaStyle.hot)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
+
+            Button {
+                Task { await send() }
+            } label: {
+                Image(systemName: "arrow.up")
+            }
+            .buttonStyle(ChatSendButtonStyle())
+            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .opacity(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)
+            .accessibilityLabel("Отправить сообщение")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            Rectangle()
+                .fill(PlayaStyle.ink900.opacity(0.76))
+                .background(.ultraThinMaterial)
+        )
     }
 
     private func refreshLoop() async {
@@ -144,7 +167,9 @@ struct ChatThreadView: View {
                 .filter { !appState.isBlocked(userId: $0.senderId) }
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            if !silent {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -183,7 +208,12 @@ struct ChatThreadView: View {
                 return
             }
             do {
-                try await service.reportContent(reporterId: currentUserId, kind: "message", targetId: message.id, reason: "Direct chat report")
+                try await service.reportContent(
+                    reporterId: currentUserId,
+                    kind: "message",
+                    targetId: message.id,
+                    reason: "Direct chat report"
+                )
                 ToastCenter.shared.success("Жалоба отправлена")
             } catch {
                 ToastCenter.shared.error("Не удалось отправить жалобу")
@@ -198,8 +228,6 @@ struct ChatThreadView: View {
     }
 }
 
-// MARK: - Bubble
-
 struct MessageBubble: View {
     let message: ChatMessage
     var onReport: (() -> Void)?
@@ -209,59 +237,79 @@ struct MessageBubble: View {
     private var canModerate: Bool { !isMine && (onReport != nil || onBlock != nil) }
 
     var body: some View {
-        HStack {
+        HStack(alignment: .bottom) {
             if isMine { Spacer(minLength: 48) }
 
-            Text(message.text)
-                .font(.playaSans(15, weight: .regular))
-                .foregroundColor(isMine ? .white : .white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    bubbleShape
-                        .fill(isMine ? PlayaStyle.hot : Color.white.opacity(0.08))
-                )
-                .overlay(
-                    bubbleShape.stroke(
-                        isMine ? Color.white.opacity(0.12) : Color.white.opacity(0.08),
-                        lineWidth: 1
-                    )
-                )
-
-            if canModerate {
-                Menu {
-                    Button("Пожаловаться", systemImage: "exclamationmark.bubble") {
-                        onReport?()
+            bubble
+                .contextMenu {
+                    if canModerate {
+                        Button("Пожаловаться", systemImage: "exclamationmark.bubble") {
+                            onReport?()
+                        }
+                        Button("Заблокировать пользователя", systemImage: "hand.raised.fill", role: .destructive) {
+                            onBlock?()
+                        }
                     }
-                    Button("Заблокировать пользователя", systemImage: "hand.raised.fill", role: .destructive) {
-                        onBlock?()
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.55))
-                        .frame(width: 30, height: 30)
                 }
-            }
+                .accessibilityAction(named: Text("Пожаловаться")) {
+                    if canModerate { onReport?() }
+                }
+                .accessibilityAction(named: Text("Заблокировать пользователя")) {
+                    if canModerate { onBlock?() }
+                }
 
             if !isMine { Spacer(minLength: 48) }
         }
     }
 
-    /// Asymmetric corner: rounded on three corners (16pt), sharp 3pt on the side
-    /// that points to the speaker. Matches the web POSTER v2 chat bubble.
+    private var bubble: some View {
+        VStack(alignment: isMine ? .trailing : .leading, spacing: 5) {
+            if !isMine {
+                Text(message.senderName)
+                    .font(.playaSans(11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.5))
+                    .lineLimit(1)
+            }
+
+            Text(message.text)
+                .font(.playaSans(15, weight: .regular))
+                .foregroundColor(.white)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 4) {
+                Text(message.createdAt?.formatted(date: .omitted, time: .shortened) ?? "Сейчас")
+                if isMine {
+                    Image(systemName: "checkmark")
+                }
+            }
+            .font(.system(size: 10, weight: .medium))
+            .foregroundColor(.white.opacity(0.46))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            bubbleShape
+                .fill(isMine ? PlayaStyle.hot : Color.white.opacity(0.08))
+        )
+        .overlay(
+            bubbleShape.stroke(
+                isMine ? Color.white.opacity(0.12) : Color.white.opacity(0.08),
+                lineWidth: 1
+            )
+        )
+    }
+
     private var bubbleShape: UnevenRoundedRectangle {
         if isMine {
             return UnevenRoundedRectangle(
                 cornerRadii: .init(topLeading: 16, bottomLeading: 16, bottomTrailing: 3, topTrailing: 16),
                 style: .continuous
             )
-        } else {
-            return UnevenRoundedRectangle(
-                cornerRadii: .init(topLeading: 16, bottomLeading: 3, bottomTrailing: 16, topTrailing: 16),
-                style: .continuous
-            )
         }
+        return UnevenRoundedRectangle(
+            cornerRadii: .init(topLeading: 16, bottomLeading: 3, bottomTrailing: 16, topTrailing: 16),
+            style: .continuous
+        )
     }
 }
 
@@ -276,9 +324,7 @@ private struct ChatSendButtonStyle: ButtonStyle {
                     .fill(PlayaStyle.hot)
                     .shadow(color: PlayaStyle.hot.opacity(0.34), radius: 12, x: 0, y: 6)
             )
-            .overlay(
-                Circle().stroke(Color.white.opacity(0.18), lineWidth: 1)
-            )
+            .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
             .scaleEffect(configuration.isPressed ? 0.92 : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }

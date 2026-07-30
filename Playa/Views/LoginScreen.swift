@@ -33,24 +33,24 @@ struct LoginScreen: View {
             isPresented: $showAppleFallback,
             titleVisibility: .visible
         ) {
-            Button("Продолжить на этом устройстве") {
+            Button("Открыть демо-режим") {
                 auth.continueWithLocalAccount(provider: "apple")
             }
             Button("Отмена", role: .cancel) {}
         } message: {
-            Text("Сейчас вход через Apple не завершился. Можно продолжить и посмотреть приложение без синхронизации.")
+            Text("Можно посмотреть интерфейс без аккаунта. Демо-данные хранятся только на этом устройстве и не синхронизируются.")
         }
         .confirmationDialog(
             "База данных недоступна",
             isPresented: $showGoogleFallback,
             titleVisibility: .visible
         ) {
-            Button("Продолжить на этом устройстве") {
+            Button("Открыть демо-режим") {
                 auth.continueWithLocalAccount(provider: "google")
             }
             Button("Отмена", role: .cancel) {}
         } message: {
-            Text("Сейчас вход через Google недоступен. Можно продолжить и посмотреть приложение без синхронизации.")
+            Text("Можно посмотреть интерфейс без аккаунта. Демо-данные хранятся только на этом устройстве и не синхронизируются.")
         }
         .sheet(isPresented: $showDiagnostics) {
             NavigationStack {
@@ -59,11 +59,8 @@ struct LoginScreen: View {
         }
     }
 
-    // MARK: - Hero (top half)
-
     private var hero: some View {
         VStack(alignment: .leading, spacing: 24) {
-            // Mono kicker: city / issue
             HStack(spacing: 8) {
                 Text("Алматы")
                 Text("·")
@@ -71,8 +68,6 @@ struct LoginScreen: View {
             }
             .playaLabel()
 
-            // Editorial display headline with serif-italic flourish.
-            // «Город — *это* ты.»
             (
                 Text("Город — ")
                     .font(.playaDisplay(46, weight: .black))
@@ -100,8 +95,6 @@ struct LoginScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Auth (bottom half)
-
     private var authBlock: some View {
         VStack(spacing: 12) {
             Button {
@@ -109,13 +102,13 @@ struct LoginScreen: View {
                 auth.continueWithLocalAccount(provider: "guest")
             } label: {
                 HStack(spacing: 10) {
-                    Image(systemName: "person.crop.circle.fill")
-                    Text("Продолжить без входа")
+                    Image(systemName: "sparkles")
+                    Text("Открыть демо-режим")
                 }
             }
             .buttonStyle(PlayaPrimaryButton())
 
-            Text("Режим проверки открывает ленту, события, чаты и профиль без аккаунта.")
+            Text("Только демонстрация интерфейса: без реального аккаунта, оплаты и синхронизации. Демо-режим всегда отмечен внутри приложения.")
                 .playaCaption()
                 .foregroundColor(.white.opacity(0.58))
                 .multilineTextAlignment(.center)
@@ -166,8 +159,6 @@ struct LoginScreen: View {
             .padding(.top, 12)
         }
     }
-
-    // MARK: - Actions
 
     private func handleApple(_ result: Result<ASAuthorization, Error>) async {
         errorMessage = nil

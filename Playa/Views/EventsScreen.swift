@@ -25,17 +25,26 @@ struct EventsScreen: View {
                             .padding(.top, 12)
 
                         if isLoading && liveEvents.isEmpty {
-                            ProgressView()
+                            ProgressView("Обновляем афишу")
                                 .tint(PlayaStyle.hot)
-                                .padding(.vertical, 10)
+                                .foregroundColor(.white.opacity(0.65))
+                                .padding(.vertical, 12)
                         }
 
                         if let eventsError {
-                            Text(eventsError)
-                                .playaCaption()
-                                .foregroundColor(.white.opacity(0.55))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 20)
+                            VStack(spacing: 10) {
+                                Text(eventsError)
+                                    .playaCaption()
+                                    .foregroundColor(.white.opacity(0.62))
+                                    .multilineTextAlignment(.center)
+                                Button {
+                                    Task { await reloadEvents() }
+                                } label: {
+                                    Label("Повторить", systemImage: "arrow.clockwise")
+                                }
+                                .buttonStyle(PlayaGhostButton())
+                            }
+                            .padding(.horizontal, 20)
                         }
 
                         ForEach(events) { event in
@@ -47,7 +56,7 @@ struct EventsScreen: View {
                             .padding(.horizontal, 16)
                         }
                     }
-                    .padding(.bottom, 110)
+                    .padding(.bottom, 32)
                 }
                 .refreshable { await reloadEvents() }
             }
@@ -63,14 +72,19 @@ struct EventsScreen: View {
             }
             .sheet(item: $chatEvent) { event in
                 NavigationStack {
-                    EventChatView(event: event, service: SocialService(supabase: auth.supabase), currentUserId: auth.userId, isGuest: auth.isGuest || auth.isLocalAccount)
+                    EventChatView(
+                        event: event,
+                        service: SocialService(supabase: auth.supabase),
+                        currentUserId: auth.userId,
+                        isGuest: auth.isDemoMode
+                    )
                 }
             }
         }
     }
 
     private func reloadEvents() async {
-        guard !auth.isLocalAccount, !auth.isGuest else { return }
+        guard !auth.isDemoMode else { return }
         isLoading = true
         eventsError = nil
         defer { isLoading = false }
@@ -80,7 +94,7 @@ struct EventsScreen: View {
         if !service.events.isEmpty {
             liveEvents = service.events
         } else if let error = service.lastError {
-            eventsError = "Связь с сервером нестабильна, показываем сохранённую афишу."
+            eventsError = "Сервер не ответил. Пока показываем сохранённую афишу."
             if !error.isEmpty {
                 settingsDebugLog(error)
             }
@@ -94,8 +108,6 @@ struct EventsScreen: View {
     }
 }
 
-// MARK: - Header
-
 private struct EventsHeader: View {
     let count: Int
     let isLive: Bool
@@ -107,11 +119,10 @@ private struct EventsHeader: View {
                 Text("·")
                 Text(isLive ? "Live" : "Алматы")
                 Spacer()
-                Text(count.formatted(.number.precision(.integerLength(2))))
+                Text("\(count) событий")
             }
             .playaLabel()
 
-            // «Сегодня в *городе*»
             (
                 Text("Сегодня\nв ")
                     .font(.playaDisplay(40, weight: .black))
@@ -130,12 +141,14 @@ private struct EventsHeader: View {
             .lineSpacing(-4)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
+
+            Text("Сначала отметь интерес, затем подтверди, что пойдёшь. Билет появится только после решения.")
+                .playaBody()
+                .foregroundColor(.white.opacity(0.58))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
-
-// MARK: - Event card (poster style)
 
 struct EventCard: View {
     @EnvironmentObject private var appState: AppState
@@ -145,10 +158,12 @@ struct EventCard: View {
     let onOpenChat: () -> Void
 
     private var isSaved: Bool { appState.isEventSaved(eventId: event.id) }
+    private var isInterested: Bool { appState.isInterested(eventId: event.id) }
+    private var isGoing: Bool { appState.isGoing(eventId: event.id) }
+    private var isDraft: Bool { event.id.hasPrefix("local-event-") }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Hero image with mono metadata strip
             Button(action: onOpen) {
                 ZStack(alignment: .topLeading) {
                     RemoteImage(url: event.imageURL)
@@ -157,23 +172,34 @@ struct EventCard: View {
 
                     LinearGradient(
                         colors: [Color.black.opacity(0.55), .clear, .clear, Color.black.opacity(0.45)],
-                        startPoint: .top, endPoint: .bottom
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
                     .frame(height: 220)
 
-                    HStack(spacing: 8) {
-                        Text(event.dateText.uppercased())
-                        if !event.timeText.isEmpty {
-                            Text("·")
-                            Text(event.timeText)
+                    VStack(alignment: .leading, spacing: 9) {
+                        HStack(spacing: 8) {
+                            Text(event.dateText.uppercased())
+                            if !event.timeText.isEmpty {
+                                Text("·")
+                                Text(event.timeText)
+                            }
+                            if let location = event.location, !location.isEmpty {
+                                Text("·")
+                                Text(location.uppercased())
+                                    .lineLimit(1)
+                            }
                         }
-                        if let location = event.location, !location.isEmpty {
-                            Text("·")
-                            Text(location.uppercased())
-                                .lineLimit(1)
+                        .playaLabel(color: .white.opacity(0.92))
+
+                        if isDraft {
+                            Label("Черновик · не опубликован", systemImage: "tray.full.fill")
+                                .playaLabel(color: PlayaStyle.bone)
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.5), in: Capsule())
                         }
                     }
-                    .playaLabel(color: .white.opacity(0.92))
                     .padding(.horizontal, 14)
                     .padding(.top, 14)
                 }
@@ -183,18 +209,14 @@ struct EventCard: View {
                             .playaLabel(color: PlayaStyle.ink900)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(
-                                Capsule(style: .continuous).fill(PlayaStyle.bone)
-                            )
+                            .background(Capsule(style: .continuous).fill(PlayaStyle.bone))
                         Spacer()
                         if let category = event.category {
                             Text(category.uppercased())
                                 .playaLabel(color: .white)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(
-                                    Capsule(style: .continuous).fill(PlayaStyle.hot)
-                                )
+                                .background(Capsule(style: .continuous).fill(PlayaStyle.hot))
                         }
                     }
                     .padding(.horizontal, 12)
@@ -203,8 +225,8 @@ struct EventCard: View {
                 )
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Открыть событие \(event.title)")
 
-            // Title + description + CTA
             VStack(alignment: .leading, spacing: 12) {
                 Text(event.title)
                     .font(.playaDisplay(22, weight: .bold))
@@ -219,11 +241,13 @@ struct EventCard: View {
                         .lineLimit(2)
                 }
 
+                eventDecisionStatus
+
                 HStack(spacing: 10) {
-                    Button(action: onOpen) {
+                    Button(action: advanceEventDecision) {
                         HStack(spacing: 8) {
-                            Image(systemName: "qrcode")
-                            Text("Открыть демо-билет")
+                            Image(systemName: decisionIcon)
+                            Text(decisionTitle)
                         }
                     }
                     .buttonStyle(PlayaPrimaryButton())
@@ -232,6 +256,7 @@ struct EventCard: View {
                         Image(systemName: "bubble.left.and.bubble.right.fill")
                     }
                     .buttonStyle(PlayaIconButton(size: 52))
+                    .accessibilityLabel("Открыть чат события")
 
                     Button {
                         appState.toggleSavedEvent(eventId: event.id)
@@ -240,6 +265,7 @@ struct EventCard: View {
                             .foregroundColor(isSaved ? PlayaStyle.hot : .white)
                     }
                     .buttonStyle(PlayaIconButton(size: 52))
+                    .accessibilityLabel(isSaved ? "Убрать из сохранённых" : "Сохранить событие")
                 }
                 .padding(.top, 4)
             }
@@ -247,9 +273,51 @@ struct EventCard: View {
         }
         .playaPoster()
     }
-}
 
-// MARK: - Empty state
+    @ViewBuilder
+    private var eventDecisionStatus: some View {
+        if isDraft {
+            Label("Локальный черновик", systemImage: "lock.fill")
+                .playaCaption()
+                .foregroundColor(.white.opacity(0.58))
+        } else if isGoing {
+            Label("Ты идёшь · билет доступен", systemImage: "checkmark.seal.fill")
+                .playaCaption()
+                .foregroundColor(PlayaStyle.lime)
+        } else if isInterested {
+            Label("Отмечено как интересное", systemImage: "heart.fill")
+                .playaCaption()
+                .foregroundColor(PlayaStyle.hot)
+        }
+    }
+
+    private var decisionTitle: String {
+        if isDraft { return "Открыть черновик" }
+        if isGoing { return "Билет / QR" }
+        if isInterested { return "Я пойду" }
+        return "Интересно"
+    }
+
+    private var decisionIcon: String {
+        if isDraft { return "doc.text.magnifyingglass" }
+        if isGoing { return "qrcode" }
+        if isInterested { return "checkmark.circle.fill" }
+        return "heart"
+    }
+
+    private func advanceEventDecision() {
+        PlayaFeedback.selection()
+        if isDraft || isGoing {
+            onOpen()
+        } else if isInterested {
+            appState.markGoing(eventId: event.id)
+            ToastCenter.shared.success("Отмечено: ты идёшь")
+        } else {
+            appState.toggleInterested(eventId: event.id)
+            ToastCenter.shared.success("Добавлено в интересное")
+        }
+    }
+}
 
 struct EmptyStateView: View {
     let title: String

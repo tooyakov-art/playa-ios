@@ -8,7 +8,7 @@ struct ProfileScreen: View {
     @AppStorage("playa.profile.name") private var profileName = "Гость Playa"
     @AppStorage("playa.profile.username") private var profileUsername = "playa.user"
     @AppStorage("playa.profile.city") private var profileCity = "Алматы"
-    @AppStorage("playa.profile.bio") private var profileBio = "Демо-профиль Playa: рекомендации по Алматы, QR-билеты, чаты событий и сохранённые планы на вечер."
+    @AppStorage("playa.profile.bio") private var profileBio = "Здесь появятся твои планы, билеты и сохранённые события."
 
     @State private var isEditingProfile = false
     @State private var settingsPresented = false
@@ -21,15 +21,16 @@ struct ProfileScreen: View {
                 ScrollView {
                     VStack(spacing: 18) {
                         hero
+                        accountStateCard
                         stats
                         profileHighlights
                         bio
-                        gallery
+                        draftsGallery
                         profileActions
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
-                    .padding(.bottom, 110)
+                    .padding(.bottom, 32)
                 }
             }
             .navigationBarHidden(true)
@@ -52,7 +53,6 @@ struct ProfileScreen: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Top action row: settings + edit
             HStack {
                 HStack(spacing: 8) {
                     Text("Профиль")
@@ -67,14 +67,15 @@ struct ProfileScreen: View {
                     Image(systemName: "gearshape.fill")
                 }
                 .buttonStyle(PlayaIconButton(size: 40))
+                .accessibilityLabel("Открыть настройки")
 
                 Button { isEditingProfile = true } label: {
                     Image(systemName: "pencil")
                 }
                 .buttonStyle(PlayaIconButton(size: 40))
+                .accessibilityLabel("Редактировать профиль")
             }
 
-            // Avatar + name with serif italic surname
             VStack(alignment: .leading, spacing: 14) {
                 AvatarView(url: nil, fallback: String(profileName.prefix(1)))
                     .frame(width: 84, height: 84)
@@ -110,13 +111,41 @@ struct ProfileScreen: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
+    private var accountStateCard: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: auth.isDemoMode ? "sparkles" : "checkmark.seal.fill")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(auth.isDemoMode ? PlayaStyle.hot : PlayaStyle.lime)
+                .frame(width: 38, height: 38)
+                .background(
+                    (auth.isDemoMode ? PlayaStyle.hot : PlayaStyle.lime).opacity(0.14),
+                    in: Circle()
+                )
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(auth.accountModeTitle)
+                    .font(.playaSans(16, weight: .bold))
+                    .foregroundColor(.white)
+                Text(auth.isDemoMode
+                     ? "Нет подключённого аккаунта. Цифры ниже отражают только действия на этом устройстве."
+                     : "Профиль подключён к аккаунту Playa.")
+                    .playaCaption()
+                    .foregroundColor(.white.opacity(0.58))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .playaPoster()
+    }
+
     private var stats: some View {
         HStack(spacing: 0) {
-            stat("18", "Подписчиков")
+            stat(auth.isDemoMode ? "0" : "—", "Подписчиков")
             Divider().background(PlayaStyle.hairline).frame(height: 56)
-            stat("7", "Подписок")
+            stat(auth.isDemoMode ? "0" : "—", "Подписок")
             Divider().background(PlayaStyle.hairline).frame(height: 56)
-            stat("\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))", "Событий")
+            stat("\(appState.createdEvents.count)", "Черновиков")
         }
         .playaPoster()
     }
@@ -125,25 +154,13 @@ struct ProfileScreen: View {
         VStack(spacing: 10) {
             HStack(spacing: 10) {
                 highlight(title: "Подписка", value: settings.subscriptionTier.title, icon: "crown.fill", color: PlayaStyle.hot)
-                highlight(title: "Демо-звёзды", value: displayStarBalance, icon: "star.fill", color: PlayaStyle.lime)
+                highlight(title: "Баланс", value: appState.starBalance.formatted(.number.grouping(.automatic)), icon: "star.fill", color: PlayaStyle.lime)
             }
             HStack(spacing: 10) {
-                highlight(title: "Билеты", value: displayTicketCount, icon: "ticket.fill", color: PlayaStyle.ember)
-                highlight(title: "Сохранено", value: displaySavedCount, icon: "bookmark.fill", color: PlayaStyle.cyan)
+                highlight(title: "Билеты", value: "\(appState.purchasedTicketEventIds.count)", icon: "ticket.fill", color: PlayaStyle.ember)
+                highlight(title: "Сохранено", value: "\(appState.savedEventIds.count)", icon: "bookmark.fill", color: PlayaStyle.cyan)
             }
         }
-    }
-
-    private var displayStarBalance: String {
-        appState.starBalance > 0 ? appState.starBalance.formatted(.number.grouping(.automatic)) : "1 000"
-    }
-
-    private var displayTicketCount: String {
-        appState.purchasedTicketEventIds.isEmpty ? "1" : "\(appState.purchasedTicketEventIds.count)"
-    }
-
-    private var displaySavedCount: String {
-        appState.savedEventIds.isEmpty ? "4" : "\(appState.savedEventIds.count)"
     }
 
     private var bio: some View {
@@ -159,39 +176,57 @@ struct ProfileScreen: View {
         .playaPoster()
     }
 
-    private var gallery: some View {
+    @ViewBuilder
+    private var draftsGallery: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Последние события").playaLabel()
+                Text("Мои черновики").playaLabel()
                 Spacer()
-                Text("\(DemoContent.events.count.formatted(.number.precision(.integerLength(2))))")
+                Text("\(appState.createdEvents.count)")
                     .playaLabel(color: .white.opacity(0.4))
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                ForEach(DemoContent.events.prefix(4)) { event in
-                    ZStack(alignment: .bottomLeading) {
-                        RemoteImage(url: event.imageURL)
-                            .frame(height: 156)
-                            .clipped()
-                        LinearGradient(colors: [.clear, .black.opacity(0.8)], startPoint: .top, endPoint: .bottom)
-                        VStack(alignment: .leading, spacing: 4) {
-                            if let date = event.dateText.split(separator: " ").first {
-                                Text(String(date).uppercased())
-                                    .playaLabel(color: PlayaStyle.bone.opacity(0.7))
+            if appState.createdEvents.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(PlayaStyle.hot)
+                    Text("Черновиков пока нет")
+                        .font(.playaSans(16, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("Созданные локально события появятся здесь без выдуманных примеров.")
+                        .playaCaption()
+                        .foregroundColor(.white.opacity(0.55))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 26)
+                .padding(.horizontal, 18)
+                .playaPoster()
+            } else {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                    ForEach(appState.createdEvents.prefix(4)) { event in
+                        ZStack(alignment: .bottomLeading) {
+                            RemoteImage(url: event.imageURL)
+                                .frame(height: 156)
+                                .clipped()
+                            LinearGradient(colors: [.clear, .black.opacity(0.86)], startPoint: .top, endPoint: .bottom)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("ЧЕРНОВИК · \(event.dateText.uppercased())")
+                                    .playaLabel(color: PlayaStyle.bone.opacity(0.75))
+                                Text(event.title)
+                                    .font(.playaSans(13, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .lineLimit(2)
                             }
-                            Text(event.title)
-                                .font(.playaSans(13, weight: .bold))
-                                .foregroundColor(.white)
-                                .lineLimit(2)
+                            .padding(10)
                         }
-                        .padding(10)
+                        .clipShape(RoundedRectangle(cornerRadius: PlayaStyle.radiusCard, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: PlayaStyle.radiusCard, style: .continuous)
+                                .stroke(PlayaStyle.hairline, lineWidth: 1)
+                        )
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: PlayaStyle.radiusCard, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: PlayaStyle.radiusCard, style: .continuous)
-                            .stroke(PlayaStyle.hairline, lineWidth: 1)
-                    )
                 }
             }
         }
@@ -200,11 +235,11 @@ struct ProfileScreen: View {
     private var profileActions: some View {
         VStack(spacing: 10) {
             Button {
-                appState.starsStorePresented = true
+                appState.createEventPresented = true
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "star.fill")
-                    Text("Добавить демо-звёзды")
+                    Image(systemName: "plus.circle.fill")
+                    Text("Создать черновик события")
                 }
             }
             .buttonStyle(PlayaPrimaryButton())
@@ -220,11 +255,11 @@ struct ProfileScreen: View {
             .buttonStyle(PlayaGhostButton())
 
             VStack(spacing: 0) {
-                if let email = auth.userEmail {
+                if let email = auth.userEmail, !auth.isDemoMode {
                     SettingsValueInline(title: "Email", value: email)
                     Divider().background(PlayaStyle.hairline).padding(.vertical, 10)
                 }
-                SettingsValueInline(title: "Режим", value: auth.isLocalAccount ? "На этом устройстве" : "Аккаунт Playa")
+                SettingsValueInline(title: "Режим", value: auth.accountModeTitle)
             }
             .padding(16)
             .playaPoster()
@@ -237,7 +272,10 @@ struct ProfileScreen: View {
                 .font(.playaDisplay(22, weight: .black))
                 .foregroundColor(.white)
                 .tracking(-0.5)
-            Text(label).playaLabel(color: .white.opacity(0.5))
+            Text(label)
+                .playaLabel(color: .white.opacity(0.5))
+                .minimumScaleFactor(0.75)
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
@@ -257,6 +295,7 @@ struct ProfileScreen: View {
                     .font(.playaSans(16, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
             Spacer()
         }
@@ -278,6 +317,7 @@ private struct SettingsValueInline: View {
                 .font(.playaSans(14, weight: .semibold))
                 .foregroundColor(.white)
                 .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
     }
 }
