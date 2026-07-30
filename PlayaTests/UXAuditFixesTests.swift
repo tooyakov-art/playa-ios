@@ -28,13 +28,16 @@ final class UXAuditFixesTests: XCTestCase {
             capacity: 80
         )
 
-        let draft = try? XCTUnwrap(state.createdEvents.first)
-        XCTAssertEqual(draft??.title, "Ночной показ")
-        XCTAssertEqual(draft??.startsAt, start)
-        XCTAssertEqual(draft??.starPrice, 25)
-        XCTAssertTrue(draft??.id.hasPrefix("local-event-") == true)
-        XCTAssertTrue(draft??.description?.contains("Черновик") == true)
-        XCTAssertTrue(draft??.description?.contains("Вместимость: 80") == true)
+        guard let draft = state.createdEvents.first else {
+            XCTFail("Expected local draft")
+            return
+        }
+        XCTAssertEqual(draft.title, "Ночной показ")
+        XCTAssertEqual(draft.startsAt, start)
+        XCTAssertEqual(draft.starPrice, 25)
+        XCTAssertTrue(draft.id.hasPrefix("local-event-"))
+        XCTAssertTrue(draft.description?.contains("Черновик") == true)
+        XCTAssertTrue(draft.description?.contains("Вместимость: 80") == true)
     }
 
     func testResetDemoDataClearsLocalActivity() {
