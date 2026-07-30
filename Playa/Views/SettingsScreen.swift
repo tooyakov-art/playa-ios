@@ -11,10 +11,11 @@ struct SettingsScreen: View {
     @AppStorage("playa.profile.name") private var profileName = "Гость Playa"
     @AppStorage("playa.profile.username") private var profileUsername = "playa.user"
     @AppStorage("playa.profile.city") private var profileCity = "Алматы"
-    @AppStorage("playa.profile.bio") private var profileBio = "Здесь будут рекомендации, билеты, QR, чаты событий и сохранённые места."
+    @AppStorage("playa.profile.bio") private var profileBio = "Здесь появятся твои планы, билеты и сохранённые события."
 
     @State private var deleteStage: DeleteStage = .idle
     @State private var accountError: String?
+    @State private var resetDemoConfirmation = false
 
     private enum DeleteStage {
         case idle
@@ -25,13 +26,17 @@ struct SettingsScreen: View {
 
     var body: some View {
         List {
-            accountSection
+            accountStatusSection
+            profileSection
             languageSection
             subscriptionSection
-            starsSection
+            if auth.isDemoMode {
+                demoDataSection
+            }
             notificationsSection
             documentsSection
             appSection
+            dangerSection
         }
         .scrollContentBackground(.hidden)
         .background(PlayaBackground())
@@ -56,7 +61,9 @@ struct SettingsScreen: View {
             Button("Продолжить", role: .destructive) { deleteStage = .finalConfirm }
             Button("Отмена", role: .cancel) { deleteStage = .idle }
         } message: {
-            Text("Профиль, билеты, чаты и сохраненные данные будут удалены.")
+            Text(auth.isDemoMode
+                 ? "Локальный демо-профиль и данные на устройстве будут удалены."
+                 : "Профиль, билеты, чаты и сохранённые данные будут удалены.")
         }
         .confirmationDialog(
             "Точно удалить навсегда?",
@@ -70,10 +77,58 @@ struct SettingsScreen: View {
         } message: {
             Text("Это действие нельзя отменить.")
         }
+        .confirmationDialog(
+            "Очистить демо-данные?",
+            isPresented: $resetDemoConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Очистить", role: .destructive) {
+                appState.resetDemoData()
+                ToastCenter.shared.success("Демо-данные очищены")
+            }
+            Button("Отмена", role: .cancel) {}
+        } message: {
+            Text("Черновики, интересы, сохранённые события, билеты, звёзды и локальные реакции будут удалены только с этого устройства.")
+        }
     }
 
-    private var accountSection: some View {
-        Section("Аккаунт") {
+    private var accountStatusSection: some View {
+        Section {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: auth.isDemoMode ? "sparkles" : "checkmark.seal.fill")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(auth.isDemoMode ? Color("Hot") : .green)
+                    .frame(width: 38, height: 38)
+                    .background(Color.white.opacity(0.07), in: Circle())
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(auth.accountModeTitle)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                    Text(auth.isDemoMode
+                         ? "Аккаунт не подключён. Данные не синхронизируются и не являются реальной активностью."
+                         : "Сессия подключена к Playa и может синхронизироваться с сервером.")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.58))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            if let email = auth.userEmail, !auth.isDemoMode {
+                SettingsValueRow(title: "Email", value: email)
+            }
+        } header: {
+            Text("Состояние аккаунта")
+        } footer: {
+            if auth.isDemoMode {
+                Text("Синтетический адрес больше не показывается: демо-режим не притворяется входом через Google или Apple.")
+            }
+        }
+        .listRowBackground(Color("Ink800"))
+    }
+
+    private var profileSection: some View {
+        Section("Профиль") {
             TextField("Имя", text: $profileName)
             TextField("Username", text: $profileUsername)
                 .textInputAutocapitalization(.never)
@@ -81,28 +136,6 @@ struct SettingsScreen: View {
             TextField("Город", text: $profileCity)
             TextField("О себе", text: $profileBio, axis: .vertical)
                 .lineLimit(3...6)
-
-            SettingsValueRow(title: "Email", value: auth.userEmail ?? "Не указан")
-            SettingsValueRow(title: "Вход", value: auth.isLocalAccount ? "На этом устройстве" : "Аккаунт Playa")
-
-            Button {
-                Task { await auth.signOut() }
-            } label: {
-                Label("Выйти", systemImage: "rectangle.portrait.and.arrow.right")
-            }
-
-            Button(role: .destructive) {
-                deleteStage = .firstConfirm
-            } label: {
-                Label(deleteStage == .deleting ? "Удаление..." : "Удалить аккаунт", systemImage: "trash")
-            }
-            .disabled(deleteStage == .deleting)
-
-            if let accountError {
-                Text(accountError)
-                    .font(.footnote)
-                    .foregroundColor(.red)
-            }
         }
         .listRowBackground(Color("Ink800"))
     }
@@ -118,7 +151,7 @@ struct SettingsScreen: View {
         } header: {
             Text("Язык")
         } footer: {
-            Text("Выбранный язык сохранится для следующих экранов приложения.")
+            Text("Выбор сохраняется сразу. Полный перевод всех экранов будет применён после подключения локализованных строк.")
         }
         .listRowBackground(Color("Ink800"))
     }
@@ -152,29 +185,27 @@ struct SettingsScreen: View {
         } header: {
             Text("Подписка")
         } footer: {
-            Text("Тариф сохранится в профиле. Оплата станет доступна после подключения продуктов в App Store.")
+            Text("Это выбор интерфейса. Реальная оплата отключена до подключения продуктов App Store.")
         }
         .listRowBackground(Color("Ink800"))
     }
 
-    private var starsSection: some View {
-        Section("Демо-звезды и билеты") {
-            HStack {
-                Label("Баланс", systemImage: "star.fill")
-                    .foregroundColor(.yellow)
-                Spacer()
-                Text(appState.starBalance.formatted(.number.grouping(.automatic)))
-                    .font(.system(size: 16, weight: .bold))
-            }
+    private var demoDataSection: some View {
+        Section {
+            SettingsValueRow(title: "Звёзды", value: appState.starBalance.formatted(.number.grouping(.automatic)))
+            SettingsValueRow(title: "Билеты", value: "\(appState.purchasedTicketEventIds.count)")
+            SettingsValueRow(title: "Черновики", value: "\(appState.createdEvents.count)")
+            SettingsValueRow(title: "Сохранено", value: "\(appState.savedEventIds.count)")
 
-            Button {
-                appState.starsStorePresented = true
+            Button(role: .destructive) {
+                resetDemoConfirmation = true
             } label: {
-                Label("Добавить демо-звезды", systemImage: "sparkles")
+                Label("Очистить демо-данные", systemImage: "arrow.counterclockwise")
             }
-
-            SettingsValueRow(title: "История", value: "Демо-действия на этом устройстве")
-            SettingsValueRow(title: "Демо-оформление", value: "Через демо-звезды")
+        } header: {
+            Text("Демо-данные на устройстве")
+        } footer: {
+            Text("Это не покупки, не реальные билеты и не серверная статистика.")
         }
         .listRowBackground(Color("Ink800"))
     }
@@ -189,7 +220,7 @@ struct SettingsScreen: View {
     }
 
     private var documentsSection: some View {
-        Section("Документы") {
+        Section("Документы и помощь") {
             ForEach(settings.legalDocuments) { document in
                 Link(destination: document.url) {
                     Label(document.title, systemImage: "doc.text")
@@ -199,7 +230,7 @@ struct SettingsScreen: View {
             Button {
                 openURL(URL(string: "mailto:\(PlayaConfig.supportEmail)")!)
             } label: {
-                Label("Support", systemImage: "envelope")
+                Label("Написать в поддержку", systemImage: "envelope")
             }
         }
         .listRowBackground(Color("Ink800"))
@@ -232,6 +263,32 @@ struct SettingsScreen: View {
         .listRowBackground(Color("Ink800"))
     }
 
+    private var dangerSection: some View {
+        Section {
+            Button {
+                Task { await auth.signOut() }
+            } label: {
+                Label(auth.isDemoMode ? "Закрыть демо-режим" : "Выйти", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+
+            Button(role: .destructive) {
+                deleteStage = .firstConfirm
+            } label: {
+                Label(deleteStage == .deleting ? "Удаление..." : "Удалить аккаунт", systemImage: "trash")
+            }
+            .disabled(deleteStage == .deleting)
+
+            if let accountError {
+                Text(accountError)
+                    .font(.footnote)
+                    .foregroundColor(.red)
+            }
+        } header: {
+            Text("Управление аккаунтом")
+        }
+        .listRowBackground(Color("Ink800"))
+    }
+
     private var backendColor: Color {
         switch settings.backendStatus {
         case .online: return .green
@@ -259,6 +316,9 @@ struct SettingsScreen: View {
         deleteStage = .deleting
         accountError = nil
         do {
+            if auth.isDemoMode {
+                appState.resetDemoData()
+            }
             try await auth.deleteAccount()
             deleteStage = .idle
             dismiss()
@@ -293,7 +353,7 @@ struct BackendDiagnosticsView: View {
             Button {
                 Task { await refresh() }
             } label: {
-                Label("Проверить еще раз", systemImage: "arrow.clockwise")
+                Label("Проверить ещё раз", systemImage: "arrow.clockwise")
                     .font(.system(size: 16, weight: .bold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -345,6 +405,8 @@ private struct SettingsValueRow: View {
             Text(value)
                 .foregroundColor(.white)
                 .multilineTextAlignment(.trailing)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
         }
         .font(.system(size: 14, weight: .semibold))
     }
